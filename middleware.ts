@@ -32,14 +32,25 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const searchParams = request.nextUrl.searchParams;
 
-  // Catch Supabase auth errors redirected to the root (e.g. expired reset links)
-  if (pathname === "/" && searchParams.get("error")) {
-    const errorCode = searchParams.get("error_code") ?? "";
-    const isRecovery = errorCode === "otp_expired" || errorCode === "access_denied";
-    const dest = isRecovery
-      ? "/auth/forgot-password?error=link_expired"
-      : "/auth/login?error=auth_failed";
-    return NextResponse.redirect(new URL(dest, request.url));
+  // Catch Supabase auth redirects that land at root instead of the intended page
+  if (pathname === "/") {
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
+
+    // PKCE code exchange landed at root (redirect_to was site root due to www/allow-list mismatch)
+    if (code) {
+      return NextResponse.redirect(new URL(`/auth/reset-password?code=${code}`, request.url));
+    }
+
+    // Auth error (e.g. expired link) redirected to root by Supabase
+    if (error) {
+      const errorCode = searchParams.get("error_code") ?? "";
+      const isRecovery = errorCode === "otp_expired" || errorCode === "access_denied";
+      const dest = isRecovery
+        ? "/auth/forgot-password?error=link_expired"
+        : "/auth/login?error=auth_failed";
+      return NextResponse.redirect(new URL(dest, request.url));
+    }
   }
 
   // Protect dashboard routes
