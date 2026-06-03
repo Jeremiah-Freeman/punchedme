@@ -1,0 +1,418 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
+import { Smartphone, Phone, MapPin, CheckCircle2, Clock } from "lucide-react";
+import type { ScanResult, SignupResult } from "@/lib/types";
+
+type PageState =
+  | "checking"       // initial — localStorage check + GPS for returning customers
+  | "checking_in"    // returning customer — calling checkin API
+  | "punch_result"   // returning customer — showing punch result
+  | "too_far"        // GPS rejected
+  | "signup"         // new customer — show form
+  | "signup_success"; // just signed up
+
+const GEO_TIMEOUT_MS = 7000;
+
+function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(Δφ / 2) ** 2 +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getStoredToken(slug: string): string | null {
+  try {
+    return localStorage.getItem(`punchedme_token_${slug}`);
+  } catch {
+    return null;
+  }
+}
+
+function storeToken(slug: string, token: string) {
+  try {
+    localStorage.setItem(`punchedme_token_${slug}`, token);
+  } catch {}
+}
+
+function getGPS(): Promise<GeolocationCoordinates | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+    const timer = setTimeout(() => resolve(null), GEO_TIMEOUT_MS);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        clearTimeout(timer);
+        resolve(pos.coords);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(null);
+      },
+      { enableHighAccuracy: false, timeout: GEO_TIMEOUT_MS }
+    );
+  });
+}
+
+export default function JoinPage() {
+  const params = useParams<{ businessSlug: string }>();
+  const slug = params.businessSlug;
+
+  const [pageState, setPageState] = useState<PageState>("checking");
+  const [businessName, setBusinessName] = useState("");
+  const [punchResult, setPunchResult] = useState<ScanResult | null>(null);
+  const [signupResult, setSignupResult] = useState<SignupResult | null>(null);
+
+  // Form state
+  const [firstName, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const performCheckin = useCallback(
+    async (token: string, lat: number | null, lng: number | null) => {
+      setPageState("checking_in");
+      try {
+        const res = await fetch("/api/scans/checkin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerToken: token,
+            businessSlug: slug,
+            latitude: lat,
+            longitude: lng,
+          }),
+        });
+        const data = await res.json();
+        if (data.status === "too_far") {
+          setPageState("too_far");
+          return;
+        }
+        setPunchResult(data as ScanResult);
+        setPageState("punch_result");
+      } catch {
+        // Network error — fall back to signup form
+        setPageState("signup");
+      }
+    },
+    [slug]
+  );
+
+  useEffect(() => {
+    // Fetch public business name for display
+    fetch(`/api/business/public?slug=${slug}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.name) setBusinessName(d.name);
+      })
+      .catch(() => {});
+
+    const storedToken = getStoredToken(slug);
+
+    if (!storedToken) {
+      // New customer — show form immediately, no GPS needed
+      setPageState("signup");
+      return;
+    }
+
+    // Returning customer — get GPS then check in
+    getGPS().then((coords) => {
+      performCheckin(
+        storedToken,
+        coords?.latitude ?? null,
+        coords?.longitude ?? null
+      );
+    });
+  }, [slug, performCheckin]);
+
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault();
+    setFormError("");
+    setFormLoading(true);
+
+    try {
+      const res = await fetch("/api/customers/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessSlug: slug,
+          firstName: firstName.trim(),
+          phoneNumber: phone.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setFormError(data.error ?? "Something went wrong. Try again.");
+        return;
+      }
+
+      const result = data as SignupResult;
+      storeToken(slug, result.publicToken);
+      setSignupResult(result);
+      setPageState("signup_success");
+    } catch {
+      setFormError("Network error. Check your connection and try again.");
+    } finally {
+      setFormLoading(false);
+    }
+  }
+
+  // ─── Loading states ───────────────────────────────────────────────
+
+  if (pageState === "checking" || pageState === "checking_in") {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 text-sm">
+            {pageState === "checking_in" ? "Checking you in…" : "Loading…"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Too far ───────────────────────────────────────────────────────
+
+  if (pageState === "too_far") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <MapPin className="w-14 h-14 text-orange-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-3">You&apos;re not at the store</h1>
+          <p className="text-gray-500">
+            This QR only works when you&apos;re physically at{" "}
+            {businessName || "the store"}. Come in and scan again!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Returning customer punch result ──────────────────────────────
+
+  if (pageState === "punch_result" && punchResult) {
+    const isReward = punchResult.status === "reward_available";
+    const isBlocked = punchResult.status === "blocked";
+
+    if (isReward) {
+      return (
+        <div className="min-h-screen bg-amber-400 flex flex-col items-center justify-center px-6">
+          <div className="w-full max-w-sm text-center">
+            <div className="text-7xl mb-4 animate-bounce">🎉</div>
+            <h1 className="text-4xl font-black text-white mb-3 drop-shadow-lg">
+              REWARD EARNED!
+            </h1>
+            <p className="text-2xl text-amber-900 font-bold mb-2">
+              {punchResult.customerName}
+            </p>
+            <p className="text-white/90 text-lg mb-8">{punchResult.message}</p>
+            <div className="bg-white rounded-2xl p-5 shadow-xl">
+              <p className="text-sm font-semibold text-gray-700">
+                Show this screen to the cashier to claim your reward
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isBlocked) {
+      return (
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+          <div className="w-full max-w-sm text-center">
+            <Clock className="w-14 h-14 text-orange-400 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-3">Already punched today!</h1>
+            <p className="text-gray-600 mb-4">{punchResult.message}</p>
+            <p className="text-sm text-gray-400">
+              Thanks for coming in, {punchResult.customerName} 👋
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Success
+    const pct = Math.min(
+      100,
+      (punchResult.currentPunches / punchResult.punchesRequired) * 100
+    );
+    const oneAway =
+      punchResult.currentPunches === punchResult.punchesRequired - 1;
+
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h1 className="text-3xl font-bold mb-1">Punched in!</h1>
+          <p className="text-gray-500 mb-8">
+            Welcome back, {punchResult.customerName} 👋
+          </p>
+
+          <div className="bg-gray-50 rounded-2xl p-6 mb-4">
+            <div className="flex justify-between text-sm text-gray-500 mb-2">
+              <span>Your visits</span>
+              <span className="font-bold text-gray-900">
+                {punchResult.currentPunches} / {punchResult.punchesRequired}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+              <div
+                className="bg-indigo-500 h-4 rounded-full transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            {oneAway && (
+              <p className="text-sm text-amber-600 font-semibold mt-3">
+                ⚡ One more visit earns your reward!
+              </p>
+            )}
+          </div>
+
+          <p className="text-sm text-gray-400">See you next time!</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Signup success ───────────────────────────────────────────────
+
+  if (pageState === "signup_success" && signupResult) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm text-center">
+          <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">
+            You&apos;re in! First punch added.
+          </h1>
+          <p className="text-gray-600 mb-8">
+            Add your card to your phone — it&apos;ll pop up on your lock screen
+            every time you&apos;re near the store.
+          </p>
+
+          <div className="space-y-3 mb-8">
+            {signupResult.appleWalletUrl && (
+              <a
+                href={signupResult.appleWalletUrl}
+                className="flex items-center justify-center gap-3 w-full bg-black text-white py-4 rounded-xl text-base font-semibold hover:bg-gray-900 transition-colors"
+              >
+                <Smartphone className="w-5 h-5" />
+                Add to Apple Wallet
+              </a>
+            )}
+            {signupResult.googleWalletUrl && (
+              <a
+                href={signupResult.googleWalletUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 w-full bg-blue-600 text-white py-4 rounded-xl text-base font-semibold hover:bg-blue-700 transition-colors"
+              >
+                <Smartphone className="w-5 h-5" />
+                Add to Google Wallet
+              </a>
+            )}
+            <a
+              href={signupResult.fallbackPassUrl}
+              className="flex items-center justify-center gap-3 w-full border-2 border-gray-200 text-gray-700 py-4 rounded-xl text-base font-semibold hover:border-gray-300 transition-colors"
+            >
+              View My Card
+            </a>
+          </div>
+
+          <p className="text-xs text-gray-400">
+            Next time you visit, just scan the same QR code. It&apos;ll
+            automatically punch you in — no form, no waiting.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── New customer signup form ─────────────────────────────────────
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-4">☕</div>
+          <h1 className="text-2xl font-bold mb-2">
+            No card. No app. Just rewards.
+          </h1>
+          <p className="text-gray-600 text-sm">
+            {businessName
+              ? `Join ${businessName}'s loyalty program.`
+              : "Join and keep your punch card on your phone."}
+          </p>
+        </div>
+
+        <form onSubmit={handleSignup} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              First name
+            </label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Jay"
+              required
+              autoComplete="given-name"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Phone number
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="(555) 123-4567"
+                required
+                autoComplete="tel"
+                className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {formError && (
+            <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl">
+              {formError}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={formLoading}
+            className="w-full bg-indigo-600 text-white py-4 rounded-xl text-base font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {formLoading ? "Joining…" : "Join Rewards"}
+          </button>
+        </form>
+
+        <p className="text-center text-xs text-gray-400 mt-6">
+          We&apos;ll never spam you. Your number is only used to identify your
+          rewards card.
+        </p>
+      </div>
+    </div>
+  );
+}
