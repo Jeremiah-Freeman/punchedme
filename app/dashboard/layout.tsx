@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, Settings, QrCode, Package, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Settings, QrCode, Package } from "lucide-react";
+import { SignOutButton } from "./SignOutButton";
 
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -24,13 +25,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!business) redirect("/onboarding");
 
-  async function signOut() {
-    "use server";
-    const supabase = await createClient();
-    await supabase.auth.signOut();
-    redirect("/auth/login");
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
@@ -52,15 +46,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           ))}
         </nav>
         <div className="p-3 border-t">
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-100 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign out
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </aside>
 

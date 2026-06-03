@@ -1,14 +1,203 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Gift, MapPin, Palette, Sparkles, Send } from "lucide-react";
+import { Building2, Gift, MapPin, Palette, Sparkles, Send, Smartphone } from "lucide-react";
 
-type OnboardingStep = "business" | "program";
+type OnboardingStep = "how" | "business" | "program";
+
+// ── How it works explainer ────────────────────────────────────────────────────
+
+function HowItWorks({ onStart }: { onStart: () => void }) {
+  return (
+    <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+      <div className="text-4xl mb-4">👊</div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">How Punched.me works</h1>
+      <p className="text-gray-500 text-sm mb-8">Three steps. The customer does all the work.</p>
+
+      <div className="space-y-5 text-left mb-8 max-w-sm mx-auto">
+        <div className="flex items-start gap-4">
+          <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">1</div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">You put your QR code at the counter</p>
+            <p className="text-gray-500 text-xs mt-0.5">One sticker. One sign. You're done.</p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-4">
+          <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">2</div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Customer scans it with their phone camera</p>
+            <p className="text-gray-500 text-xs mt-0.5">A digital punch card is instantly added to their Apple or Google Wallet. No app download. No account.</p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-4">
+          <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">3</div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Each visit, they scan again to punch in</p>
+            <p className="text-gray-500 text-xs mt-0.5">When they hit the goal, their phone notifies them automatically — "You earned your reward!" You get notified too.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 rounded-xl p-4 mb-8 text-sm text-gray-600 border border-gray-100">
+        <strong className="text-gray-800">The customer does everything from their phone.</strong>
+        {" "}You just run your business.
+      </div>
+
+      <button
+        onClick={onStart}
+        className="w-full bg-indigo-600 text-white py-3.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+      >
+        Set up my loyalty program →
+      </button>
+    </div>
+  );
+}
+
+// ── Google Places address autocomplete ────────────────────────────────────────
+
+declare global {
+  interface Window {
+    google?: {
+      maps: {
+        places: {
+          Autocomplete: new (input: HTMLInputElement, options?: object) => {
+            addListener: (event: string, handler: () => void) => void;
+            getPlace: () => { formatted_address?: string };
+          };
+        };
+      };
+    };
+  }
+}
+
+function AddressInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  useEffect(() => {
+    if (!mapsKey || !inputRef.current) return;
+    if (window.google?.maps?.places) {
+      attachAutocomplete();
+      return;
+    }
+    // Load script if not already present
+    const existing = document.querySelector('script[data-gmaps]');
+    if (!existing) {
+      const script = document.createElement("script");
+      script.dataset.gmaps = "1";
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&libraries=places`;
+      script.async = true;
+      script.onload = attachAutocomplete;
+      document.head.appendChild(script);
+    } else {
+      existing.addEventListener("load", attachAutocomplete);
+    }
+
+    function attachAutocomplete() {
+      if (!inputRef.current || !window.google) return;
+      const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
+        types: ["establishment", "geocode"],
+      });
+      ac.addListener("place_changed", () => {
+        const place = ac.getPlace();
+        if (place.formatted_address) onChange(place.formatted_address);
+      });
+    }
+  }, [mapsKey, onChange]);
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="123 Main St, Austin TX 78701"
+      autoComplete="off"
+      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+    />
+  );
+}
+
+// ── Notification preview ──────────────────────────────────────────────────────
+
+function NotificationPreview({
+  businessName,
+  rewardDescription,
+  brandColor,
+}: {
+  businessName: string;
+  rewardDescription: string;
+  brandColor: string;
+}) {
+  const name = businessName || "Your Business";
+  const reward = rewardDescription || "your reward";
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+        <Smartphone className="w-3.5 h-3.5" />
+        What the customer&apos;s notification looks like
+      </p>
+
+      {/* iOS */}
+      <div>
+        <p className="text-[10px] text-gray-400 mb-1.5 uppercase tracking-wide">iPhone</p>
+        <div className="bg-[#1c1c1e]/90 rounded-2xl p-3 flex items-center gap-3 shadow-lg">
+          <div
+            className="w-10 h-10 rounded-[10px] flex items-center justify-center text-white text-sm font-bold shrink-0 shadow"
+            style={{ backgroundColor: brandColor }}
+          >
+            {name.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-baseline">
+              <span className="text-white/60 text-[10px] font-medium uppercase tracking-wide truncate">{name}</span>
+              <span className="text-white/40 text-[10px] ml-2 shrink-0">now</span>
+            </div>
+            <p className="text-white text-[13px] font-semibold leading-tight mt-0.5">🎉 You earned your reward!</p>
+            <p className="text-white/75 text-[12px] font-light leading-tight truncate">{reward} is ready to claim.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Android */}
+      <div>
+        <p className="text-[10px] text-gray-400 mb-1.5 uppercase tracking-wide">Android</p>
+        <div className="bg-[#202124] rounded-xl p-3 flex items-start gap-3 shadow-lg">
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+            style={{ backgroundColor: brandColor }}
+          >
+            {name.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-baseline">
+              <span className="text-white/70 text-[11px] font-medium">{name} · Punched.me</span>
+              <span className="text-white/40 text-[10px] ml-2 shrink-0">now</span>
+            </div>
+            <p className="text-white text-[13px] font-medium leading-tight mt-0.5">You earned your reward!</p>
+            <p className="text-white/60 text-[12px] leading-tight truncate">{reward}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [step, setStep] = useState<OnboardingStep>("business");
+  const [step, setStep] = useState<OnboardingStep>("how");
 
   // Business fields
   const [businessName, setBusinessName] = useState("");
@@ -27,6 +216,14 @@ export default function OnboardingPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Autofocus first input on each step
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (step !== "how") {
+      firstInputRef.current?.focus();
+    }
+  }, [step]);
 
   async function handleBusinessSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,7 +272,8 @@ export default function OnboardingPage() {
         setError(data.error ?? "Failed to create program");
         return;
       }
-      router.push("/dashboard");
+      // Go to QR code welcome page instead of dashboard
+      router.push("/onboarding/success");
     } catch {
       setError("Network error. Try again.");
     } finally {
@@ -95,11 +293,18 @@ export default function OnboardingPage() {
       });
       setCustomRequestSent(true);
     } catch {
-      setCustomRequestSent(true); // Still show success
+      setCustomRequestSent(true);
     } finally {
       setSendingRequest(false);
     }
   }
+
+  // Step indicators (only show after how-it-works)
+  const showProgress = step !== "how";
+  const progressSteps: { id: OnboardingStep; label: string }[] = [
+    { id: "business", label: "Your business" },
+    { id: "program", label: "Your program" },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-start justify-center px-4 py-12">
@@ -108,235 +313,251 @@ export default function OnboardingPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <span className="text-2xl font-bold text-gray-900 tracking-tight">Punched.me</span>
-          <p className="text-sm text-gray-500 mt-1">Set up your loyalty program in 60 seconds.</p>
         </div>
 
-        {/* Progress */}
-        <div className="flex items-center gap-3 mb-8 px-1">
-          {(["business", "program"] as OnboardingStep[]).map((s, i) => (
-            <div key={s} className="flex items-center gap-3 flex-1">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                step === s
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                  : s === "business" && step === "program"
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-200 text-gray-400"
-              }`}>
-                {s === "business" && step === "program" ? "✓" : i + 1}
-              </div>
-              <span className="text-sm font-medium text-gray-600 capitalize">{s === "business" ? "Your business" : "Your program"}</span>
-              {i === 0 && <div className="flex-1 h-px bg-gray-200" />}
-            </div>
-          ))}
-        </div>
+        {/* How it works — full width, no sidebar */}
+        {step === "how" && <HowItWorks onStart={() => setStep("business")} />}
 
-        {/* Main + Sidebar layout */}
-        <div className="flex gap-5 items-start">
-
-          {/* Main card */}
-          <div className="flex-1">
-            {step === "business" ? (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-indigo-600" />
+        {/* Business + Program steps */}
+        {step !== "how" && (
+          <>
+            {/* Progress */}
+            <div className="flex items-center gap-3 mb-8 px-1">
+              {progressSteps.map((s, i) => (
+                <div key={s.id} className="flex items-center gap-3 flex-1">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                    step === s.id
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                      : s.id === "business" && step === "program"
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-200 text-gray-400"
+                  }`}>
+                    {s.id === "business" && step === "program" ? "✓" : i + 1}
                   </div>
-                  <div>
-                    <h1 className="text-base font-semibold text-gray-900">Your business</h1>
-                    <p className="text-sm text-gray-500">Tell us a bit about your place.</p>
-                  </div>
+                  <span className="text-sm font-medium text-gray-600">{s.label}</span>
+                  {i === 0 && <div className="flex-1 h-px bg-gray-200" />}
                 </div>
+              ))}
+            </div>
 
-                <form onSubmit={handleBusinessSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Business name
-                    </label>
-                    <input
-                      type="text"
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      required
-                      placeholder="Kawfi Coffee"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                    />
+            {/* Main + Sidebar layout */}
+            <div className="flex gap-5 items-start">
+
+              {/* Main card */}
+              <div className="flex-1">
+
+                {/* ── Step: Business ── */}
+                {step === "business" && (
+                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <h1 className="text-base font-semibold text-gray-900">Your business</h1>
+                        <p className="text-sm text-gray-500">Tell us a bit about your place.</p>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleBusinessSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Business name
+                        </label>
+                        <input
+                          ref={firstInputRef}
+                          type="text"
+                          value={businessName}
+                          onChange={(e) => setBusinessName(e.target.value)}
+                          required
+                          placeholder="Kawfi Coffee"
+                          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          <span className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                            Business address
+                          </span>
+                        </label>
+                        <AddressInput value={address} onChange={setAddress} />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Used to send customers a wallet notification when they arrive near you.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          <span className="flex items-center gap-1.5">
+                            <Palette className="w-3.5 h-3.5 text-gray-400" />
+                            Brand color
+                          </span>
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="color"
+                            value={brandColor}
+                            onChange={(e) => setBrandColor(e.target.value)}
+                            className="h-10 w-14 rounded-lg cursor-pointer border border-gray-200"
+                          />
+                          <span className="text-sm text-gray-400 font-mono">{brandColor}</span>
+                          <span className="text-xs text-gray-400">— shown on wallet cards</span>
+                        </div>
+                      </div>
+
+                      {error && (
+                        <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
+                          {error}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+                      >
+                        {loading ? "Saving…" : "Continue →"}
+                      </button>
+                    </form>
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                        Business address
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="123 Main St, Austin TX 78701"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Used to send customers a wallet notification when they arrive near you.
-                    </p>
-                  </div>
+                {/* ── Step: Program ── */}
+                {step === "program" && (
+                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                        <Gift className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h1 className="text-base font-semibold text-gray-900">Your loyalty program</h1>
+                        <p className="text-sm text-gray-500">Two questions. That&apos;s it.</p>
+                      </div>
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      <span className="flex items-center gap-1.5">
-                        <Palette className="w-3.5 h-3.5 text-gray-400" />
-                        Brand color
-                      </span>
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="color"
-                        value={brandColor}
-                        onChange={(e) => setBrandColor(e.target.value)}
-                        className="h-10 w-14 rounded-lg cursor-pointer border border-gray-200"
+                    <form onSubmit={handleProgramSubmit} className="space-y-5">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          How many visits to earn a reward?
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="range"
+                            value={punchesRequired}
+                            onChange={(e) => setPunchesRequired(Number(e.target.value))}
+                            min={3}
+                            max={30}
+                            className="flex-1 accent-indigo-600"
+                          />
+                          <span className="w-12 text-center text-2xl font-bold text-indigo-600">
+                            {punchesRequired}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          What&apos;s the reward?
+                        </label>
+                        <input
+                          ref={firstInputRef}
+                          type="text"
+                          value={rewardDescription}
+                          onChange={(e) => setRewardDescription(e.target.value)}
+                          required
+                          placeholder="Free 12oz coffee of your choice"
+                          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          This is shown on the customer&apos;s wallet card and in their notification.
+                        </p>
+                      </div>
+
+                      {/* Wallet card preview — centered, no label inside */}
+                      <div
+                        className="rounded-xl p-5 text-white flex flex-col items-center text-center"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        <div className="font-bold text-lg leading-tight">
+                          {rewardDescription || "Your reward here"}
+                        </div>
+                        <div className="opacity-75 text-xs mt-1.5">after {punchesRequired} visits</div>
+                      </div>
+
+                      {/* Notification preview */}
+                      <NotificationPreview
+                        businessName={businessName}
+                        rewardDescription={rewardDescription}
+                        brandColor={brandColor}
                       />
-                      <span className="text-sm text-gray-400 font-mono">{brandColor}</span>
-                      <span className="text-xs text-gray-400">— shown on your customers' wallet cards</span>
-                    </div>
+
+                      {error && (
+                        <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
+                          {error}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+                      >
+                        {loading ? "Launching…" : "Start My Loyalty Program 🚀"}
+                      </button>
+                    </form>
                   </div>
-
-                  {error && (
-                    <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
-                      {error}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
-                  >
-                    {loading ? "Saving…" : "Continue →"}
-                  </button>
-                </form>
+                )}
               </div>
-            ) : (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                    <Gift className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <h1 className="text-base font-semibold text-gray-900">Your loyalty program</h1>
-                    <p className="text-sm text-gray-500">Two questions. That&apos;s it.</p>
-                  </div>
-                </div>
 
-                <form onSubmit={handleProgramSubmit} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      How many visits to earn a reward?
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="range"
-                        value={punchesRequired}
-                        onChange={(e) => setPunchesRequired(Number(e.target.value))}
-                        min={3}
-                        max={30}
-                        className="flex-1 accent-indigo-600"
+              {/* Sidebar */}
+              <div className="w-56 shrink-0">
+                <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-violet-500" />
+                    <span className="text-sm font-semibold text-violet-800">Want something unique?</span>
+                  </div>
+                  <p className="text-xs text-violet-600 mb-3 leading-relaxed">
+                    Custom punch card design, special integrations, branded experience — tell us and we&apos;ll build it for you.
+                  </p>
+
+                  {customRequestSent ? (
+                    <div className="text-center py-3">
+                      <div className="text-2xl mb-1">🎉</div>
+                      <p className="text-xs font-semibold text-violet-700">Got it! We&apos;ll be in touch.</p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleCustomRequest} className="space-y-2">
+                      <textarea
+                        value={customRequest}
+                        onChange={(e) => setCustomRequest(e.target.value)}
+                        placeholder="I'd love a punch card that looks like a passport stamp..."
+                        rows={4}
+                        className="w-full text-xs border border-violet-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white resize-none"
                       />
-                      <span className="w-12 text-center text-2xl font-bold text-indigo-600">
-                        {punchesRequired}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Customer gets their reward after {punchesRequired} visits.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      What&apos;s the reward?
-                    </label>
-                    <input
-                      type="text"
-                      value={rewardDescription}
-                      onChange={(e) => setRewardDescription(e.target.value)}
-                      required
-                      placeholder="Free 12oz coffee of your choice"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      This is shown on the customer&apos;s wallet card and in their notification.
-                    </p>
-                  </div>
-
-                  {/* Preview */}
-                  <div className="rounded-xl p-4 text-white text-sm" style={{ backgroundColor: brandColor }}>
-                    <div className="opacity-70 text-xs mb-1 uppercase tracking-wide font-medium">Preview · {businessName || "Your Business"}</div>
-                    <div className="font-bold text-base">{rewardDescription || "Your reward here"}</div>
-                    <div className="opacity-80 text-xs mt-1">after {punchesRequired} visits</div>
-                  </div>
-
-                  {error && (
-                    <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100">
-                      {error}
-                    </div>
+                      <button
+                        type="submit"
+                        disabled={sendingRequest || !customRequest.trim()}
+                        className="w-full flex items-center justify-center gap-1.5 bg-violet-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                      >
+                        <Send className="w-3 h-3" />
+                        {sendingRequest ? "Sending…" : "Send request"}
+                      </button>
+                    </form>
                   )}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
-                  >
-                    {loading ? "Launching…" : "Launch my program 🚀"}
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
-
-          {/* Cute sidebar */}
-          <div className="w-56 shrink-0">
-            <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-violet-500" />
-                <span className="text-sm font-semibold text-violet-800">Want something unique?</span>
-              </div>
-              <p className="text-xs text-violet-600 mb-3 leading-relaxed">
-                Custom punch card design, special integrations, branded experience — tell us and we&apos;ll build it for you.
-              </p>
-
-              {customRequestSent ? (
-                <div className="text-center py-3">
-                  <div className="text-2xl mb-1">🎉</div>
-                  <p className="text-xs font-semibold text-violet-700">Got it! We&apos;ll be in touch.</p>
                 </div>
-              ) : (
-                <form onSubmit={handleCustomRequest} className="space-y-2">
-                  <textarea
-                    value={customRequest}
-                    onChange={(e) => setCustomRequest(e.target.value)}
-                    placeholder="I'd love a punch card that looks like a passport stamp..."
-                    rows={4}
-                    className="w-full text-xs border border-violet-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white resize-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sendingRequest || !customRequest.trim()}
-                    className="w-full flex items-center justify-center gap-1.5 bg-violet-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
-                  >
-                    <Send className="w-3 h-3" />
-                    {sendingRequest ? "Sending…" : "Send request"}
-                  </button>
-                </form>
-              )}
-            </div>
 
-            {/* Little tip card */}
-            <div className="mt-3 bg-gray-50 border border-gray-100 rounded-xl p-3">
-              <p className="text-xs text-gray-500 leading-relaxed">
-                💡 <strong>Tip:</strong> Your brand color shows on every customer&apos;s Apple & Google Wallet card. Pick something that pops.
-              </p>
+                <div className="mt-3 bg-gray-50 border border-gray-100 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    💡 <strong>Tip:</strong> Your brand color shows on every customer&apos;s Apple & Google Wallet card. Pick something that pops.
+                  </p>
+                </div>
+              </div>
+
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
