@@ -30,6 +30,17 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  const searchParams = request.nextUrl.searchParams;
+
+  // Catch Supabase auth errors redirected to the root (e.g. expired reset links)
+  if (pathname === "/" && searchParams.get("error")) {
+    const errorCode = searchParams.get("error_code") ?? "";
+    const isRecovery = errorCode === "otp_expired" || errorCode === "access_denied";
+    const dest = isRecovery
+      ? "/auth/forgot-password?error=link_expired"
+      : "/auth/login?error=auth_failed";
+    return NextResponse.redirect(new URL(dest, request.url));
+  }
 
   // Protect dashboard routes
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding")) {
