@@ -17,31 +17,62 @@ function ResetPasswordForm() {
   const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
-    // Exchange the PKCE code for a session when the page loads
+    const supabase = createClient();
+    let resolved = false;
+
+    const markReady = () => {
+      if (resolved) return;
+      resolved = true;
+      setSessionReady(true);
+      setExchanging(false);
+    };
+
+    // Implicit (hash) recovery links: the browser client auto-detects the
+    // #access_token in the URL and fires a recovery/sign-in event.
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        session &&
+        (event === "PASSWORD_RECOVERY" ||
+          event === "SIGNED_IN" ||
+          event === "INITIAL_SESSION")
+      ) {
+        markReady();
+      }
+    });
+
     const code = searchParams.get("code");
-    if (!code) {
-      // No code — check if there's already an active session (e.g. navigated here directly)
-      const supabase = createClient();
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) {
-          setSessionReady(true);
+    if (code) {
+      // PKCE flow: exchange the ?code for a session.
+      supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
+        if (exchangeError) {
+          if (!resolved) {
+            setError("This reset link has expired or already been used. Please request a new one.");
+            setExchanging(false);
+          }
         } else {
-          setError("Invalid or expired reset link. Please request a new one.");
+          markReady();
         }
-        setExchanging(false);
       });
-      return;
+      return () => sub.subscription.unsubscribe();
     }
 
-    const supabase = createClient();
-    supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
-      if (exchangeError) {
-        setError("This reset link has expired or already been used. Please request a new one.");
-      } else {
-        setSessionReady(true);
-      }
-      setExchanging(false);
+    // No ?code — either an implicit #access_token hash still being processed,
+    // or a direct visit. Check for an existing session, then give the hash a
+    // brief window before declaring the link invalid.
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) markReady();
     });
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        setError("Invalid or expired reset link. Please request a new one.");
+        setExchanging(false);
+      }
+    }, 1500);
+
+    return () => {
+      clearTimeout(timeout);
+      sub.subscription.unsubscribe();
+    };
   }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {

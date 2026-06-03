@@ -24,8 +24,11 @@ function ForgotPasswordForm() {
     setLoading(true);
 
     const supabase = createClient();
+    // Use the live origin (not a hardcoded env URL) so the PKCE code_verifier
+    // cookie is set on the same host the reset code returns to. An apex/www
+    // mismatch is what silently broke the code exchange before.
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     });
 
     setLoading(false);

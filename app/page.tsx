@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { ArrowRight, Smartphone, QrCode, Star, Zap } from "lucide-react";
+import RecoveryRedirect from "./RecoveryRedirect";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
+      {/* Forwards misrouted password-reset links to /auth/reset-password */}
+      <RecoveryRedirect />
       {/* Nav */}
       <nav className="border-b px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
         <span className="font-bold text-xl tracking-tight">Punched.me</span>
