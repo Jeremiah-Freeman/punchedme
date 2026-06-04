@@ -2,55 +2,87 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Gift, MapPin, Palette, Sparkles, Send, Smartphone } from "lucide-react";
+import { Building2, Gift, MapPin, Palette, Sparkles, Send, Smartphone, Plus, X } from "lucide-react";
 
 type OnboardingStep = "how" | "business" | "program";
 
 // ── How it works explainer ────────────────────────────────────────────────────
 
-function HowItWorks({ onStart }: { onStart: () => void }) {
+function PunchEmblem() {
   return (
-    <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
-      <div className="text-4xl mb-4">👊</div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">How Punched.me works</h1>
-      <p className="text-gray-500 text-sm mb-8">Three steps. The customer does all the work.</p>
+    <div className="w-28 h-28 mx-auto rounded-full bg-white shadow-[0_12px_35px_rgba(99,102,241,0.22)] flex items-center justify-center">
+      <svg
+        viewBox="0 0 130 100"
+        className="w-16 h-16"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-label="Punched emblem"
+      >
+        {/* speed lines */}
+        <line x1="8" y1="32" x2="28" y2="32" stroke="#C7C2F4" strokeWidth="7" />
+        <line x1="4" y1="50" x2="30" y2="50" stroke="#C7C2F4" strokeWidth="7" />
+        <line x1="8" y1="68" x2="28" y2="68" stroke="#C7C2F4" strokeWidth="7" />
+        {/* fist body */}
+        <path
+          d="M50 36 q-1 -12 12 -13 l42 -3 q14 -1 15 13 l2 26 q1 14 -13 16 l-38 4 q-16 2 -18 -13 z"
+          stroke="#6D5BE2"
+          strokeWidth="7"
+          fill="white"
+        />
+        {/* finger separators */}
+        <path d="M70 24 v20" stroke="#6D5BE2" strokeWidth="6" />
+        <path d="M86 23 v20" stroke="#6D5BE2" strokeWidth="6" />
+        <path d="M102 22 v20" stroke="#6D5BE2" strokeWidth="6" />
+        {/* thumb */}
+        <path d="M56 60 q14 12 32 6" stroke="#6D5BE2" strokeWidth="7" />
+      </svg>
+    </div>
+  );
+}
 
-      <div className="space-y-5 text-left mb-8 max-w-sm mx-auto">
-        <div className="flex items-start gap-4">
-          <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">1</div>
-          <div>
-            <p className="font-semibold text-gray-900 text-sm">You put your QR code at the counter</p>
-            <p className="text-gray-500 text-xs mt-0.5">One sticker. One sign. You're done.</p>
-          </div>
-        </div>
+function HowItWorks({ onStart }: { onStart: () => void }) {
+  const steps = [
+    "You put your QR code at the counter",
+    "Customer scans it with their phone camera",
+    "Each visit, they scan again to punch in",
+  ];
 
-        <div className="flex items-start gap-4">
-          <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">2</div>
-          <div>
-            <p className="font-semibold text-gray-900 text-sm">Customer scans it with their phone camera</p>
-            <p className="text-gray-500 text-xs mt-0.5">A digital punch card is instantly added to their Apple or Google Wallet. No app download. No account.</p>
-          </div>
-        </div>
+  return (
+    <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100 text-center">
+      <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-10">
+        How Punched works
+      </h1>
 
-        <div className="flex items-start gap-4">
-          <div className="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 text-indigo-600 font-bold text-sm">3</div>
-          <div>
-            <p className="font-semibold text-gray-900 text-sm">Each visit, they scan again to punch in</p>
-            <p className="text-gray-500 text-xs mt-0.5">When they hit the goal, their phone notifies them automatically — "You earned your reward!" You get notified too.</p>
+      <div className="mb-10">
+        {steps.map((title, i) => (
+          <div key={i}>
+            {i > 0 && (
+              <div className="flex justify-center">
+                <div className="w-px h-8 bg-indigo-200" />
+              </div>
+            )}
+            <div className="border border-indigo-200 rounded-2xl px-6 py-7 flex items-center gap-6 text-left">
+              <div className="w-14 h-14 rounded-full border border-indigo-300 flex items-center justify-center shrink-0 text-indigo-600 font-bold text-2xl">
+                {i + 1}
+              </div>
+              <p className="font-bold text-gray-900 text-lg md:text-xl">{title}</p>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
 
-      <div className="bg-gray-50 rounded-xl p-4 mb-8 text-sm text-gray-600 border border-gray-100">
-        <strong className="text-gray-800">The customer does everything from their phone.</strong>
-        {" "}You just run your business.
-      </div>
+      <p className="font-bold text-gray-900 text-lg md:text-xl leading-snug mb-8">
+        The customer does everything from their phone.
+        <br />
+        You just run your business.
+      </p>
 
       <button
         onClick={onStart}
-        className="w-full bg-indigo-600 text-white py-3.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+        className="w-full bg-indigo-600 text-white py-4 rounded-xl text-base md:text-lg font-bold hover:bg-indigo-700 transition-colors shadow-sm"
       >
-        Set up my loyalty program →
+        Set up my stupidly simple loyalty program
       </button>
     </div>
   );
@@ -205,6 +237,9 @@ export default function OnboardingPage() {
   const [brandColor, setBrandColor] = useState("#6366f1");
   const [businessId, setBusinessId] = useState("");
 
+  // Extra store locations (optional)
+  const [extraAddresses, setExtraAddresses] = useState<string[]>([]);
+
   // Program fields
   const [rewardDescription, setRewardDescription] = useState("");
   const [punchesRequired, setPunchesRequired] = useState(10);
@@ -242,6 +277,21 @@ export default function OnboardingPage() {
         return;
       }
       setBusinessId(data.business.id);
+
+      // Save any extra store locations (best-effort, non-blocking)
+      const extras = extraAddresses.map((a) => a.trim()).filter(Boolean);
+      for (const extra of extras) {
+        try {
+          await fetch("/api/business/locations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address: extra }),
+          });
+        } catch {
+          // ignore — they can add it later from Dashboard → Locations
+        }
+      }
+
       setStep("program");
     } catch {
       setError("Network error. Try again.");
@@ -307,12 +357,12 @@ export default function OnboardingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-start justify-center px-4 py-12">
+    <div className="min-h-screen bg-white flex items-start justify-center px-4 py-12">
       <div className="w-full max-w-2xl">
 
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <span className="text-2xl font-bold text-gray-900 tracking-tight">Punched.me</span>
+        {/* Logo emblem */}
+        <div className="mb-10">
+          <PunchEmblem />
         </div>
 
         {/* How it works — full width, no sidebar */}
@@ -386,6 +436,48 @@ export default function OnboardingPage() {
                         <p className="text-xs text-gray-400 mt-1">
                           Used to send customers a wallet notification when they arrive near you.
                         </p>
+
+                        {/* Extra store locations */}
+                        {extraAddresses.map((extra, i) => (
+                          <div key={i} className="flex items-center gap-2 mt-3">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={extra}
+                                onChange={(e) =>
+                                  setExtraAddresses((prev) =>
+                                    prev.map((a, j) => (j === i ? e.target.value : a))
+                                  )
+                                }
+                                placeholder={`Store ${i + 2} address`}
+                                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExtraAddresses((prev) => prev.filter((_, j) => j !== i))
+                              }
+                              className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                              title="Remove this location"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Add Location button */}
+                        <div className="flex flex-col items-center mt-4">
+                          <button
+                            type="button"
+                            onClick={() => setExtraAddresses((prev) => [...prev, ""])}
+                            className="w-10 h-10 rounded-full border-2 border-indigo-200 text-indigo-500 hover:bg-indigo-50 hover:border-indigo-300 flex items-center justify-center transition-colors"
+                            title="Add another store location"
+                          >
+                            <Plus className="w-5 h-5" />
+                          </button>
+                          <span className="text-xs text-gray-400 mt-1.5">Add Location</span>
+                        </div>
                       </div>
 
                       <div>
