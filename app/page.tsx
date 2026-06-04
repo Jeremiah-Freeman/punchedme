@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Smartphone, QrCode, Star, Zap } from "lucide-react";
 import RecoveryRedirect from "./RecoveryRedirect";
+import { Logo } from "@/components/Logo";
 
 export default function LandingPage() {
   return (
@@ -9,7 +10,10 @@ export default function LandingPage() {
       <RecoveryRedirect />
       {/* Nav */}
       <nav className="border-b px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
-        <span className="font-bold text-xl tracking-tight">Punched.me</span>
+        <span className="flex items-center gap-2.5">
+          <Logo size={40} />
+          <span className="font-bold text-xl tracking-tight">Punched</span>
+        </span>
         <div className="flex items-center gap-4">
           <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900">
             Log in

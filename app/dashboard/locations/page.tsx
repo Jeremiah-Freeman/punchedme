@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { MapPin, Plus, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 type BusinessLocation = {
   id: string;
@@ -171,14 +172,11 @@ export default function LocationsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Store address
                 </label>
-                <input
-                  ref={addressRef}
-                  type="text"
+                <AddressAutocomplete
+                  inputRef={addressRef as React.RefObject<HTMLInputElement>}
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={setAddress}
                   placeholder="456 King St, Sydney NSW 2000, Australia"
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  required
                 />
                 <p className="text-xs text-gray-400 mt-1">
                   Include city and country for international stores.

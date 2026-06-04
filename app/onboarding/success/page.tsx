@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { CheckCircle, ArrowRight, Printer } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 interface BusinessData {
   name: string;
@@ -48,7 +49,7 @@ export default function OnboardingSuccessPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <span className="text-2xl font-bold text-gray-900 tracking-tight">Punched.me</span>
+          <Logo size={72} className="mx-auto" />
         </div>
 
         {/* Success card */}

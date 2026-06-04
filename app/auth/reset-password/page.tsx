@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
+import { Logo } from "@/components/Logo";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -106,8 +107,8 @@ function ResetPasswordForm() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-bold text-gray-900">
-            Punched.me
+          <Link href="/" className="inline-block">
+            <Logo size={72} className="mx-auto" />
           </Link>
           <h1 className="text-xl font-semibold mt-4 mb-1">Set new password</h1>
           <p className="text-gray-600 text-sm">Choose a strong password for your account</p>

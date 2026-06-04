@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, Users, Settings, QrCode, Package, MapPin } from "lucide-react";
 import { SignOutButton } from "./SignOutButton";
+import { Logo } from "@/components/Logo";
 
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -31,7 +32,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-56 bg-white border-r min-h-screen">
         <div className="p-5 border-b">
-          <Link href="/dashboard" className="font-bold text-lg text-gray-900">Punched.me</Link>
+          <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg text-gray-900">
+            <Logo size={32} />
+            Punched
+          </Link>
           <p className="text-xs text-gray-500 mt-0.5 truncate">{business.name}</p>
         </div>
         <nav className="flex-1 p-3 space-y-1">
