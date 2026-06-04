@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getBusinessCoords } from "@/lib/locations";
 
 /**
  * GET /api/wallet/google/[token]
@@ -78,6 +79,10 @@ export async function GET(
     appUrl: base,
     latitude: biz?.latitude ?? null,
     longitude: biz?.longitude ?? null,
+    locations: await getBusinessCoords(db, customer.business_id, {
+      latitude: biz?.latitude ?? null,
+      longitude: biz?.longitude ?? null,
+    }),
   });
 
   return NextResponse.redirect(saveUrl);

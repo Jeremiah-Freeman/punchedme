@@ -85,6 +85,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create business" }, { status: 500 });
     }
 
+    // Seed first location from the onboarding address (best-effort)
+    if (address?.trim()) {
+      try {
+        await db.from("business_locations").insert({
+          business_id: business.id,
+          address: address.trim(),
+          latitude,
+          longitude,
+        });
+      } catch (e) {
+        console.error("Seed location error:", e);
+      }
+    }
+
     // Auto-create owner staff record
     await db.from("staff_users").insert({
       business_id: business.id,

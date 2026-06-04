@@ -32,6 +32,8 @@ interface ApplePassOptions {
   appUrl: string;
   latitude?: number | null;
   longitude?: number | null;
+  /** All store locations — overrides latitude/longitude when provided */
+  locations?: { latitude: number; longitude: number }[];
 }
 
 export async function generateApplePass(opts: ApplePassOptions): Promise<Buffer> {
@@ -47,6 +49,7 @@ export async function generateApplePass(opts: ApplePassOptions): Promise<Buffer>
     appUrl,
     latitude,
     longitude,
+    locations,
   } = opts;
 
   const passJson = buildPassJson({
@@ -61,6 +64,7 @@ export async function generateApplePass(opts: ApplePassOptions): Promise<Buffer>
     appUrl,
     latitude,
     longitude,
+    locations,
   });
 
   const passJsonBuffer = Buffer.from(JSON.stringify(passJson, null, 2));
@@ -131,6 +135,7 @@ function buildPassJson(opts: ApplePassOptions) {
     appUrl,
     latitude,
     longitude,
+    locations,
   } = opts;
 
   const teamId = process.env.APPLE_TEAM_ID!;
@@ -226,15 +231,20 @@ function buildPassJson(opts: ApplePassOptions) {
     },
   };
 
-  // Add location for lock screen notifications when near the store
-  if (latitude != null && longitude != null) {
-    pass.locations = [
-      {
-        latitude,
-        longitude,
-        relevantText,
-      },
-    ];
+  // Add store locations for lock screen notifications near ANY store.
+  // Apple allows max 10 locations per pass.
+  const allCoords =
+    locations && locations.length > 0
+      ? locations
+      : latitude != null && longitude != null
+      ? [{ latitude, longitude }]
+      : [];
+  if (allCoords.length > 0) {
+    pass.locations = allCoords.slice(0, 10).map((c) => ({
+      latitude: c.latitude,
+      longitude: c.longitude,
+      relevantText,
+    }));
     pass.maxDistance = 500; // Show notification within 500 meters
   }
 

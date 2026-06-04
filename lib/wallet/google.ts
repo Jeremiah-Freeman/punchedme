@@ -27,6 +27,8 @@ interface GoogleWalletOptions {
   appUrl: string;
   latitude?: number | null;
   longitude?: number | null;
+  /** All store locations — overrides latitude/longitude when provided */
+  locations?: { latitude: number; longitude: number }[];
 }
 
 export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promise<string> {
@@ -42,6 +44,7 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
     appUrl,
     latitude,
     longitude,
+    locations,
   } = opts;
 
   const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID!;
@@ -116,15 +119,19 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
     },
   };
 
-  // Add location for Google Wallet location-based notifications
-  if (latitude != null && longitude != null) {
-    loyaltyObject.locations = [
-      {
-        kind: "walletobjets#latLongPoint",
-        latitude,
-        longitude,
-      },
-    ];
+  // Add store locations for Google Wallet location-based notifications
+  const allCoords =
+    locations && locations.length > 0
+      ? locations
+      : latitude != null && longitude != null
+      ? [{ latitude, longitude }]
+      : [];
+  if (allCoords.length > 0) {
+    loyaltyObject.locations = allCoords.slice(0, 10).map((c) => ({
+      kind: "walletobjets#latLongPoint",
+      latitude: c.latitude,
+      longitude: c.longitude,
+    }));
   }
 
   // Build JWT payload

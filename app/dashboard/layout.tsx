@@ -1,13 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, Settings, QrCode, Package } from "lucide-react";
+import { LayoutDashboard, Users, Settings, QrCode, Package, MapPin } from "lucide-react";
 import { SignOutButton } from "./SignOutButton";
 
 const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/program", label: "Program", icon: Package },
+  { href: "/dashboard/locations", label: "Locations", icon: MapPin },
   { href: "/dashboard/scan", label: "Scan Mode", icon: QrCode },
   { href: "/dashboard/assets", label: "Assets", icon: Settings },
 ];

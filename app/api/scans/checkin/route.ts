@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getBusinessCoords } from "@/lib/locations";
 import type { ScanResult } from "@/lib/types";
 
 const GEO_RADIUS_M = 200;
@@ -58,29 +59,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Business not found" }, { status: 404 });
     }
 
-    // GPS check — only if we have both customer coords and business coords
-    if (
-      latitude !== null &&
-      longitude !== null &&
-      business.latitude &&
-      business.longitude
-    ) {
-      const dist = haversineDistance(
-        latitude,
-        longitude,
-        business.latitude,
-        business.longitude
-      );
-      if (dist > GEO_RADIUS_M) {
-        return NextResponse.json(
-          {
-            status: "too_far",
-            distanceMeters: Math.round(dist),
-            businessName: business.name,
-            message: `You need to be at ${business.name} to earn a punch.`,
-          },
-          { status: 403 }
+    // GPS check — customer must be within radius of ANY store location
+    if (latitude !== null && longitude !== null) {
+      const storeCoords = await getBusinessCoords(db, business.id, business);
+      if (storeCoords.length > 0) {
+        const nearest = Math.min(
+          ...storeCoords.map((c) =>
+            haversineDistance(latitude, longitude, c.latitude, c.longitude)
+          )
         );
+        if (nearest > GEO_RADIUS_M) {
+          return NextResponse.json(
+            {
+              status: "too_far",
+              distanceMeters: Math.round(nearest),
+              businessName: business.name,
+              message: `You need to be at ${business.name} to earn a punch.`,
+            },
+            { status: 403 }
+          );
+        }
       }
     }
 

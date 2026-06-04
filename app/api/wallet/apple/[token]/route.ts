@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getBusinessCoords } from "@/lib/locations";
 
 /**
  * GET /api/wallet/apple/[token]
@@ -63,6 +64,10 @@ export async function GET(
   const brandColor = business?.brand_color ?? "#6366f1";
   const latitude = (business as { latitude?: number | null } | null)?.latitude ?? null;
   const longitude = (business as { longitude?: number | null } | null)?.longitude ?? null;
+  const storeLocations = await getBusinessCoords(db, customer.business_id, {
+    latitude,
+    longitude,
+  });
 
   const appConfigured =
     !!process.env.APPLE_TEAM_ID &&
@@ -93,6 +98,7 @@ export async function GET(
     appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
     latitude,
     longitude,
+    locations: storeLocations,
   });
 
   return new NextResponse(passBuffer as unknown as BodyInit, {
