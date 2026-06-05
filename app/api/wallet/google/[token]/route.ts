@@ -33,7 +33,7 @@ export async function GET(
 
   const { data: business } = await db
     .from("businesses")
-    .select("name, brand_color, latitude, longitude")
+    .select("name, brand_color, latitude, longitude, logo_url")
     .eq("id", customer.business_id)
     .single();
 
@@ -65,7 +65,7 @@ export async function GET(
 
   const { generateGoogleWalletUrl } = await import("@/lib/wallet/google");
 
-  const biz = business as { name?: string; brand_color?: string; latitude?: number | null; longitude?: number | null } | null;
+  const biz = business as { name?: string; brand_color?: string; logo_url?: string | null; latitude?: number | null; longitude?: number | null } | null;
 
   const saveUrl = await generateGoogleWalletUrl({
     token,
@@ -73,6 +73,7 @@ export async function GET(
     customerName: customer.first_name,
     businessName: biz?.name ?? "Rewards",
     brandColor: biz?.brand_color ?? "#6366f1",
+    logoUrl: biz?.logo_url ?? null,
     currentPunches: account?.current_punches ?? 0,
     punchesRequired: program?.punches_required ?? 10,
     rewardName: program?.reward_name ?? "Reward",

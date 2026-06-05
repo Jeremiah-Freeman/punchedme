@@ -21,6 +21,7 @@ interface GoogleWalletOptions {
   customerName: string;
   businessName: string;
   brandColor: string;
+  logoUrl?: string | null;
   currentPunches: number;
   punchesRequired: number;
   rewardName: string;
@@ -38,6 +39,7 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
     customerName,
     businessName,
     brandColor,
+    logoUrl,
     currentPunches,
     punchesRequired,
     rewardName,
@@ -109,14 +111,22 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
     infoModuleData: {
       showLastUpdateTime: true,
     },
-    heroImage: {
-      sourceUri: {
-        uri: `${appUrl}/api/og/pass-hero?business=${encodeURIComponent(businessName)}&color=${encodeURIComponent(brandColor)}`,
-      },
-      contentDescription: {
-        defaultValue: { language: "en-US", value: `${businessName} loyalty card` },
-      },
-    },
+    ...(logoUrl
+      ? {
+          logo: {
+            sourceUri: { uri: logoUrl },
+            contentDescription: {
+              defaultValue: { language: "en-US", value: businessName },
+            },
+          },
+          heroImage: {
+            sourceUri: { uri: logoUrl },
+            contentDescription: {
+              defaultValue: { language: "en-US", value: `${businessName} loyalty card` },
+            },
+          },
+        }
+      : {}),
   };
 
   // Add store locations for Google Wallet location-based notifications

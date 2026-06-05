@@ -26,6 +26,7 @@ interface ApplePassOptions {
   customerName: string;
   businessName: string;
   brandColor: string;
+  logoUrl?: string | null;
   currentPunches: number;
   punchesRequired: number;
   rewardName: string;
@@ -43,6 +44,7 @@ export async function generateApplePass(opts: ApplePassOptions): Promise<Buffer>
     customerName,
     businessName,
     brandColor,
+    logoUrl,
     currentPunches,
     punchesRequired,
     rewardName,
@@ -69,17 +71,31 @@ export async function generateApplePass(opts: ApplePassOptions): Promise<Buffer>
 
   const passJsonBuffer = Buffer.from(JSON.stringify(passJson, null, 2));
 
-  // 1x1 transparent PNG placeholder icons (real impl would use branded images)
-  const iconBuffer = Buffer.from(
+  // 1x1 transparent PNG — fallback when no business logo is set
+  const placeholderBuffer = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
     "base64"
   );
 
+  // Fetch business logo if available; fall back to placeholder
+  let logoBuffer = placeholderBuffer;
+  if (logoUrl) {
+    try {
+      const res = await fetch(logoUrl);
+      if (res.ok) {
+        const arrayBuffer = await res.arrayBuffer();
+        logoBuffer = Buffer.from(arrayBuffer);
+      }
+    } catch {
+      // Non-fatal — keep placeholder
+    }
+  }
+
   const files: Record<string, Buffer> = {
     "pass.json": passJsonBuffer,
-    "icon.png": iconBuffer,
-    "icon@2x.png": iconBuffer,
-    "logo.png": iconBuffer,
+    "icon.png": logoBuffer,
+    "icon@2x.png": logoBuffer,
+    "logo.png": logoBuffer,
   };
 
   // Build manifest

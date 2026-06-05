@@ -40,7 +40,7 @@ export async function GET(
   // Look up business + program
   const { data: business } = await db
     .from("businesses")
-    .select("name, brand_color, latitude, longitude")
+    .select("name, brand_color, latitude, longitude, logo_url")
     .eq("id", customer.business_id)
     .single();
 
@@ -62,6 +62,7 @@ export async function GET(
   const rewardName = program?.reward_name ?? "Reward";
   const businessName = business?.name ?? "Rewards";
   const brandColor = business?.brand_color ?? "#6366f1";
+  const logoUrl = (business as { logo_url?: string | null } | null)?.logo_url ?? null;
   const latitude = (business as { latitude?: number | null } | null)?.latitude ?? null;
   const longitude = (business as { longitude?: number | null } | null)?.longitude ?? null;
   const storeLocations = await getBusinessCoords(db, customer.business_id, {
@@ -92,6 +93,7 @@ export async function GET(
     customerName: customer.first_name,
     businessName,
     brandColor,
+    logoUrl,
     currentPunches,
     punchesRequired,
     rewardName,

@@ -23,7 +23,7 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
 
   const { data: business } = await db
     .from("businesses")
-    .select("name, brand_color, slug")
+    .select("name, brand_color, slug, logo_url")
     .eq("id", customer.business_id)
     .single();
 
@@ -45,6 +45,7 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
   const rewardName = program?.reward_name ?? "Reward";
   const businessName = business?.name ?? "Rewards";
   const brandColor = business?.brand_color ?? "#6366f1";
+  const logoUrl = (business as { logo_url?: string | null } | null)?.logo_url ?? null;
   const rewardReady = currentPunches >= punchesRequired;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -62,13 +63,26 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
           style={{ background: `linear-gradient(135deg, ${brandColor}, ${darken(brandColor, 20)})` }}
         >
           <div className="flex items-start justify-between mb-6">
-            <div>
-              <p className="text-sm opacity-80">{businessName}</p>
-              <p className="text-lg font-semibold">{customer.first_name}</p>
+            <div className="flex items-center gap-3">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={businessName}
+                  className="w-12 h-12 rounded-xl object-cover bg-white/20"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg font-bold">
+                  {businessName.slice(0, 1).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-semibold">{businessName}</p>
+                <p className="text-lg font-bold">{customer.first_name}</p>
+              </div>
             </div>
             <div className="text-right">
-              <p className="text-xs opacity-70 uppercase tracking-wide">Rewards</p>
-              <p className="text-xs opacity-70">{program?.name}</p>
+              <p className="text-xs opacity-70 uppercase tracking-wide">Punches</p>
+              <p className="text-sm font-semibold opacity-90">{currentPunches} / {punchesRequired}</p>
             </div>
           </div>
 

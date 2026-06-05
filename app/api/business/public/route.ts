@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const db = createAdminClient();
   const { data: business } = await db
     .from("businesses")
-    .select("name, brand_color, slug")
+    .select("name, brand_color, slug, logo_url")
     .eq("slug", slug)
     .single();
 

@@ -32,9 +32,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Sidebar */}
       <aside className="hidden md:flex flex-col w-56 bg-white border-r min-h-screen">
         <div className="p-5 border-b">
-          <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg text-gray-900">
-            <Logo size={32} />
-            Punched
+          <Link href="/dashboard" className="flex items-center">
+            <Logo size={28} wordmark />
           </Link>
           <p className="text-xs text-gray-500 mt-0.5 truncate">{business.name}</p>
         </div>

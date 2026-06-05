@@ -73,6 +73,8 @@ export default function JoinPage() {
 
   const [pageState, setPageState] = useState<PageState>("checking");
   const [businessName, setBusinessName] = useState("");
+  const [brandColor, setBrandColor] = useState("#6366f1");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [punchResult, setPunchResult] = useState<ScanResult | null>(null);
   const [signupResult, setSignupResult] = useState<SignupResult | null>(null);
 
@@ -112,11 +114,13 @@ export default function JoinPage() {
   );
 
   useEffect(() => {
-    // Fetch public business name for display
+    // Fetch public business info for display
     fetch(`/api/business/public?slug=${slug}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.name) setBusinessName(d.name);
+        if (d?.brand_color) setBrandColor(d.brand_color);
+        if (d?.logo_url) setLogoUrl(d.logo_url);
       })
       .catch(() => {});
 
@@ -348,7 +352,22 @@ export default function JoinPage() {
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-4">☕</div>
+          <div className="flex justify-center mb-4">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={businessName}
+                className="w-20 h-20 rounded-2xl object-cover shadow-sm"
+              />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-sm"
+                style={{ backgroundColor: brandColor }}
+              >
+                {businessName ? businessName.slice(0, 1).toUpperCase() : "?"}
+              </div>
+            )}
+          </div>
           <h1 className="text-2xl font-bold mb-2">
             No card. No app. Just rewards.
           </h1>

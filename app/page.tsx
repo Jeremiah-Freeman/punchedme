@@ -10,10 +10,7 @@ export default function LandingPage() {
       <RecoveryRedirect />
       {/* Nav */}
       <nav className="border-b px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
-        <span className="flex items-center gap-2.5">
-          <Logo size={40} />
-          <span className="font-bold text-xl tracking-tight">Punched</span>
-        </span>
+        <Logo size={36} wordmark />
         <div className="flex items-center gap-4">
           <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900">
             Log in

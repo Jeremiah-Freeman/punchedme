@@ -58,11 +58,20 @@ function PassCard({
       <div className="flex items-center justify-between gap-2 mb-1">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-9 h-9 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden shrink-0">
-            <img
-              src={logoUrl || "/logo.png"}
-              alt=""
-              className="w-7 h-7 object-contain"
-            />
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center text-white font-bold"
+                style={{ backgroundColor: brandColor, fontSize: "0.75rem" }}
+              >
+                {name.replace(/[^A-Z]/g, "").slice(0, 2) || name.slice(0, 2).toUpperCase()}
+              </div>
+            )}
           </div>
           <span
             className="font-bold text-gray-900 uppercase leading-tight truncate"
