@@ -142,6 +142,38 @@ export default function OnboardingPage() {
 
   // Autofocus first input on each step
   const firstInputRef = useRef<HTMLInputElement>(null);
+  const primaryAddrRef = useRef<HTMLInputElement>(null);
+
+  // ── Refresh-proofing: step lives in the URL, data recovers from the server ──
+  // On first load, restore the step from ?step= so refresh doesn't restart the wizard
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get("step");
+    if (s === "business" || s === "program") setStep(s);
+  }, []);
+
+  // Keep the URL in sync as they move through steps
+  useEffect(() => {
+    const url = step === "how" ? "/onboarding" : `/onboarding?step=${step}`;
+    window.history.replaceState(null, "", url);
+  }, [step]);
+
+  // If they refresh on the program step, recover their business from the server
+  useEffect(() => {
+    if (step !== "program" || businessId) return;
+    fetch("/api/business/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.business) {
+          setBusinessId(d.business.id);
+          setBusinessName(d.business.name ?? "");
+          if (d.business.brand_color) setBrandColor(d.business.brand_color);
+        } else {
+          // No business yet — they can't be on the program step
+          setStep("business");
+        }
+      })
+      .catch(() => setStep("business"));
+  }, [step, businessId]);
   useEffect(() => {
     if (step !== "how") {
       firstInputRef.current?.focus();
@@ -203,6 +235,7 @@ export default function OnboardingPage() {
           rewardName: rewardDescription,
           punchesRequired,
           punchCooldownMinutes: 120,
+          brandColor,
         }),
       });
       const data = await res.json();
@@ -260,40 +293,37 @@ export default function OnboardingPage() {
         {step !== "how" && (
           <>
             {/* Progress */}
-            <div className="flex items-center gap-3 mb-8 px-1">
+            <div className="flex items-center justify-center gap-3 mb-8 px-1">
               {progressSteps.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-3 flex-1">
+                <div key={s.id} className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                    step === s.id
+                    step === s.id || (s.id === "business" && step === "program")
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                      : s.id === "business" && step === "program"
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-200 text-gray-400"
+                      : "border border-indigo-300 text-indigo-500 bg-transparent"
                   }`}>
                     {s.id === "business" && step === "program" ? "✓" : i + 1}
                   </div>
                   <span className="text-sm font-medium text-gray-600">{s.label}</span>
-                  {i === 0 && <div className="flex-1 h-px bg-gray-200" />}
+                  {i === 0 && <div className="w-16 md:w-24 h-px bg-gray-200" />}
                 </div>
               ))}
             </div>
 
-            {/* Main + Sidebar layout */}
-            <div className="flex gap-5 items-start">
+            {/* Main layout */}
+            <div className="flex flex-col gap-5">
 
               {/* Main card */}
               <div className="flex-1">
 
                 {/* ── Step: Business ── */}
                 {step === "business" && (
-                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-400">
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
                         <Building2 className="w-5 h-5 text-indigo-600" />
                       </div>
                       <div>
                         <h1 className="text-base font-semibold text-gray-900">Your business</h1>
-                        <p className="text-sm text-gray-500">Tell us a bit about your place.</p>
                       </div>
                     </div>
 
@@ -309,7 +339,7 @@ export default function OnboardingPage() {
                           onChange={(e) => setBusinessName(e.target.value)}
                           required
                           placeholder="Kawfi Coffee"
-                          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                          className="w-full border border-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                         />
                       </div>
 
@@ -320,14 +350,36 @@ export default function OnboardingPage() {
                             Business address
                           </span>
                         </label>
-                        <AddressAutocomplete value={address} onChange={setAddress} />
-                        <p className="text-xs text-gray-400 mt-1">
-                          Used to send customers a wallet notification when they arrive near you.
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full border border-indigo-500 text-indigo-700 text-xs flex items-center justify-center shrink-0">
+                            1
+                          </div>
+                          <div className="flex-1">
+                            <AddressAutocomplete
+                              inputRef={primaryAddrRef as React.RefObject<HTMLInputElement>}
+                              value={address}
+                              onChange={setAddress}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAddress("");
+                              primaryAddrRef.current?.focus();
+                            }}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                            title="Clear this address"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
 
-                        {/* Extra store locations */}
+                        {/* Extra store locations — numbering continues: 2, 3, 4… */}
                         {extraAddresses.map((extra, i) => (
                           <div key={i} className="flex items-center gap-2 mt-3">
+                            <div className="w-6 h-6 rounded-full border border-indigo-500 text-indigo-700 text-xs flex items-center justify-center shrink-0">
+                              {i + 2}
+                            </div>
                             <div className="flex-1">
                               <AddressAutocomplete
                                 value={extra}
@@ -344,7 +396,7 @@ export default function OnboardingPage() {
                               onClick={() =>
                                 setExtraAddresses((prev) => prev.filter((_, j) => j !== i))
                               }
-                              className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                              className="text-gray-400 hover:text-red-500 transition-colors p-1"
                               title="Remove this location"
                             >
                               <X className="w-4 h-4" />
@@ -357,31 +409,12 @@ export default function OnboardingPage() {
                           <button
                             type="button"
                             onClick={() => setExtraAddresses((prev) => [...prev, ""])}
-                            className="w-10 h-10 rounded-full border-2 border-indigo-200 text-indigo-500 hover:bg-indigo-50 hover:border-indigo-300 flex items-center justify-center transition-colors"
+                            className="w-[46px] h-[46px] rounded-full border-2 border-indigo-300 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-400 flex items-center justify-center transition-colors"
                             title="Add another store location"
                           >
-                            <Plus className="w-5 h-5" />
+                            <Plus className="w-7 h-7" strokeWidth={1.25} />
                           </button>
-                          <span className="text-xs text-gray-400 mt-1.5">Add Location</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                          <span className="flex items-center gap-1.5">
-                            <Palette className="w-3.5 h-3.5 text-gray-400" />
-                            Brand color
-                          </span>
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="color"
-                            value={brandColor}
-                            onChange={(e) => setBrandColor(e.target.value)}
-                            className="h-10 w-14 rounded-lg cursor-pointer border border-gray-200"
-                          />
-                          <span className="text-sm text-gray-400 font-mono">{brandColor}</span>
-                          <span className="text-xs text-gray-400">— shown on wallet cards</span>
+                          <span className="text-xs text-gray-500 mt-1.5">Add Location</span>
                         </div>
                       </div>
 
@@ -394,9 +427,10 @@ export default function OnboardingPage() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+                        className="w-1/2 mx-auto block bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+                        style={{ fontSize: "1rem" }}
                       >
-                        {loading ? "Saving…" : "Continue →"}
+                        {loading ? "Saving…" : "Last Step"}
                       </button>
                     </form>
                   </div>
@@ -404,8 +438,8 @@ export default function OnboardingPage() {
 
                 {/* ── Step: Program ── */}
                 {step === "program" && (
-                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-400">
+                    <div className="flex flex-col items-center text-center gap-2 mb-6">
                       <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
                         <Gift className="w-5 h-5 text-amber-600" />
                       </div>
@@ -453,6 +487,39 @@ export default function OnboardingPage() {
                         </p>
                       </div>
 
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          <span className="flex items-center gap-1.5">
+                            <Palette className="w-3.5 h-3.5 text-gray-400" />
+                            Pick a card color
+                          </span>
+                        </label>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {["#6366f1", "#ef4444", "#f59e0b", "#10b981", "#0ea5e9", "#ec4899", "#8b5cf6", "#1f2937"].map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setBrandColor(c)}
+                              className={`w-8 h-8 rounded-full transition-transform ${
+                                brandColor === c ? "ring-2 ring-offset-2 ring-indigo-400 scale-110" : "hover:scale-110"
+                              }`}
+                              style={{ backgroundColor: c }}
+                              title={c}
+                            />
+                          ))}
+                          <label className="w-8 h-8 rounded-full border border-dashed border-gray-300 flex items-center justify-center cursor-pointer text-gray-400 text-lg leading-none hover:border-gray-400" title="Custom color">
+                            +
+                            <input
+                              type="color"
+                              value={brandColor}
+                              onChange={(e) => setBrandColor(e.target.value)}
+                              className="sr-only"
+                            />
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">You can change this anytime. Watch the card below update.</p>
+                      </div>
+
                       {/* Wallet card preview */}
                       <div>
                         <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5">
@@ -493,50 +560,48 @@ export default function OnboardingPage() {
                     </form>
                   </div>
                 )}
-              </div>
 
-              {/* Sidebar */}
-              <div className="w-56 shrink-0">
-                <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-100 rounded-2xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-violet-500" />
-                    <span className="text-sm font-semibold text-violet-800">Want something unique?</span>
-                  </div>
-                  <p className="text-xs text-violet-600 mb-3 leading-relaxed">
-                    Custom punch card design, special integrations, branded experience — tell us and we&apos;ll build it for you.
-                  </p>
-
-                  {customRequestSent ? (
-                    <div className="text-center py-3">
-                      <div className="text-2xl mb-1">🎉</div>
-                      <p className="text-xs font-semibold text-violet-700">Got it! We&apos;ll be in touch.</p>
+                {/* Want something unique — below the program form, last step only */}
+                {step === "program" && (
+                  <div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-6 mt-5 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-semibold text-gray-700">Want something unique?</span>
                     </div>
-                  ) : (
-                    <form onSubmit={handleCustomRequest} className="space-y-2">
-                      <textarea
-                        value={customRequest}
-                        onChange={(e) => setCustomRequest(e.target.value)}
-                        placeholder="I'd love a punch card that looks like a passport stamp..."
-                        rows={4}
-                        className="w-full text-xs border border-violet-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white resize-none"
-                      />
-                      <button
-                        type="submit"
-                        disabled={sendingRequest || !customRequest.trim()}
-                        className="w-full flex items-center justify-center gap-1.5 bg-violet-600 text-white py-2 rounded-lg text-xs font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors"
-                      >
-                        <Send className="w-3 h-3" />
-                        {sendingRequest ? "Sending…" : "Send request"}
-                      </button>
-                    </form>
-                  )}
-                </div>
+                    <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+                      <span className="block whitespace-nowrap" style={{ fontSize: "clamp(0.65rem, 2.9vw, 1.01rem)" }}>
+                        Custom punch card design, special integrations, branded experience
+                      </span>
+                      <span className="block">Tell us and we&apos;ll build it for you.</span>
+                    </p>
 
-                <div className="mt-3 bg-gray-50 border border-gray-100 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    💡 <strong>Tip:</strong> Your brand color shows on every customer&apos;s Apple & Google Wallet card. Pick something that pops.
-                  </p>
-                </div>
+                    {customRequestSent ? (
+                      <div className="text-center py-3">
+                        <div className="text-2xl mb-1">🎉</div>
+                        <p className="text-xs font-semibold text-violet-700">Got it! We&apos;ll be in touch.</p>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleCustomRequest} className="space-y-3">
+                        <textarea
+                          value={customRequest}
+                          onChange={(e) => setCustomRequest(e.target.value)}
+                          placeholder="I'd love a punch card that looks like a passport stamp..."
+                          rows={3}
+                          className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white resize-none"
+                        />
+                        <button
+                          type="submit"
+                          disabled={sendingRequest || !customRequest.trim()}
+                          className="w-1/2 mx-auto flex items-center justify-center gap-1.5 bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+                          style={{ fontSize: "1rem" }}
+                        >
+                          <Send className="w-3 h-3" />
+                          {sendingRequest ? "Sending…" : "Send request"}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
               </div>
 
             </div>

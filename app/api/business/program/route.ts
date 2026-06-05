@@ -11,12 +11,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { businessId, name, rewardName, punchesRequired, punchCooldownMinutes } = body as {
+    const { businessId, name, rewardName, punchesRequired, punchCooldownMinutes, brandColor } = body as {
       businessId: string;
       name: string;
       rewardName: string;
       punchesRequired: number;
       punchCooldownMinutes: number;
+      brandColor?: string;
     };
 
     if (!businessId || !name || !rewardName || !punchesRequired) {
@@ -35,6 +36,11 @@ export async function POST(request: NextRequest) {
 
     if (!biz) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Update brand color if provided (picked on this step now)
+    if (brandColor) {
+      await db.from("businesses").update({ brand_color: brandColor }).eq("id", businessId);
     }
 
     // Deactivate existing programs

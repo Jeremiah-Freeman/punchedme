@@ -20,8 +20,8 @@
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 214.3 25% 80%;
+    --input: 214.3 25% 80%;
     --ring: 239 84% 67%;
     --radius: 0.75rem;
   }
@@ -55,5 +55,82 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-weight: 200; /* Raleway light-thin everywhere */
+  }
+}
+
+/* All font sizes +35% (was +50%, reduced 10%) (Tailwind text-* utilities scaled up) */
+@layer utilities {
+  .text-xs {
+    font-size: 1.01rem !important;
+    line-height: 1.49rem !important;
+  }
+  .text-sm {
+    font-size: 1.18rem !important;
+    line-height: 1.71rem !important;
+  }
+  .text-base {
+    font-size: 1.35rem !important;
+    line-height: 1.89rem !important;
+  }
+  .text-lg {
+    font-size: 1.52rem !important;
+    line-height: 2.07rem !important;
+  }
+  .text-xl {
+    font-size: 1.69rem !important;
+    line-height: 2.25rem !important;
+  }
+  .text-2xl {
+    font-size: 2.03rem !important;
+    line-height: 2.61rem !important;
+  }
+  .text-3xl {
+    font-size: 2.53rem !important;
+    line-height: 3.06rem !important;
+  }
+  .text-4xl {
+    font-size: 3.04rem !important;
+    line-height: 3.51rem !important;
+  }
+  .text-5xl {
+    font-size: 4.05rem !important;
+    line-height: 4.5rem !important;
+  }
+}
+
+/* Darken all gray text ~30% (each gray shade reads one step darker) */
+@layer utilities {
+  .text-gray-300 {
+    color: rgb(156 163 175) !important; /* gray-400 */
+  }
+  .text-gray-400 {
+    color: rgb(107 114 128) !important; /* gray-500 */
+  }
+  .text-gray-500 {
+    color: rgb(75 85 99) !important; /* gray-600 */
+  }
+  .text-gray-600 {
+    color: rgb(55 65 81) !important; /* gray-700 */
+  }
+  .text-gray-700 {
+    color: rgb(31 41 55) !important; /* gray-800 */
+  }
+}
+
+/* Raleway weight scale: body = 200, "bold" = two notches up (400) */
+@layer utilities {
+  .font-normal {
+    font-weight: 200 !important;
+  }
+  .font-medium {
+    font-weight: 300 !important;
+  }
+  .font-semibold,
+  .font-bold,
+  .font-extrabold,
+  strong,
+  b {
+    font-weight: 400 !important;
   }
 }

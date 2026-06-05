@@ -52,14 +52,13 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-16">
+      <div className="w-full max-w-sm md:scale-110 md:origin-center">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <Logo size={72} className="mx-auto" />
           </Link>
           <h1 className="text-xl font-semibold mt-4 mb-1">Create your account</h1>
-          <p className="text-gray-600 text-sm">Set up your loyalty program in under 5 minutes.</p>
         </div>
 
         <form onSubmit={handleSignup} className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
