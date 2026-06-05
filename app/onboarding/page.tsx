@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Building2, Gift, MapPin, Palette, Sparkles, Send, Smartphone, Plus, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { PassPreviews } from "@/components/PassPreviews";
 
 type OnboardingStep = "how" | "business" | "program";
 
@@ -131,6 +132,60 @@ export default function OnboardingPage() {
   // Program fields
   const [rewardDescription, setRewardDescription] = useState("");
   const [punchesRequired, setPunchesRequired] = useState(10);
+
+  // Logo upload (optional)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  async function handleLogoFile(file: File) {
+    setUploadingLogo(true);
+    try {
+      // Resize client-side to max 512px PNG
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 512;
+          const scale = Math.min(1, max / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d")!;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+
+      // Show it immediately in the previews
+      setLogoUrl(dataUrl);
+
+      // Persist to the server (best-effort; preview already works)
+      const res = await fetch("/api/business/logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUrl }),
+      });
+      const data = await res.json();
+      if (res.ok && data.logoUrl) setLogoUrl(data.logoUrl);
+    } catch {
+      // keep local preview; they can retry
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  async function matchColorFromLogo() {
+    // Native browser eyedropper — pick any pixel on screen (e.g. their logo)
+    const EyeDropperCtor = (window as unknown as { EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> } }).EyeDropper;
+    if (!EyeDropperCtor) return;
+    try {
+      const result = await new EyeDropperCtor().open();
+      if (result?.sRGBHex) setBrandColor(result.sRGBHex);
+    } catch {
+      // user cancelled
+    }
+  }
 
   // Custom request
   const [customRequest, setCustomRequest] = useState("");
@@ -517,24 +572,62 @@ export default function OnboardingPage() {
                             />
                           </label>
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">You can change this anytime. Watch the card below update.</p>
+                        <p className="text-xs text-gray-400 mt-1">You can change this anytime. Watch the cards below update.</p>
                       </div>
 
-                      {/* Wallet card preview */}
+                      {/* Logo upload (optional) */}
                       <div>
-                        <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1.5">
-                          <Smartphone className="w-3.5 h-3.5" />
-                          What their wallet punch card looks like
-                        </p>
-                        <div
-                          className="rounded-xl p-5 text-white flex flex-col items-center text-center"
-                          style={{ backgroundColor: brandColor }}
-                        >
-                          <div className="font-bold text-lg leading-tight">
-                            {rewardDescription || "Your reward here"}
-                          </div>
-                          <div className="opacity-75 text-xs mt-1.5">after {punchesRequired} visits</div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Your logo <span className="text-gray-400">(optional)</span>
+                        </label>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              className="sr-only"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleLogoFile(f);
+                              }}
+                            />
+                            <span className="inline-flex items-center gap-2 border border-gray-400 rounded-xl px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                              <span className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={logoUrl || "/logo.png"} alt="" className="w-6 h-6 object-contain" />
+                              </span>
+                              {uploadingLogo ? "Uploading…" : logoUrl ? "Change logo" : "Upload logo"}
+                            </span>
+                          </label>
+                          {logoUrl && typeof window !== "undefined" && "EyeDropper" in window && (
+                            <button
+                              type="button"
+                              onClick={matchColorFromLogo}
+                              className="text-xs text-indigo-600 underline underline-offset-2"
+                              title="Click, then click any color in your logo to match it exactly"
+                            >
+                              🎯 Match card color from my logo
+                            </button>
+                          )}
                         </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Shows on their wallet card. We size it for Apple &amp; Google automatically.
+                        </p>
+                      </div>
+
+                      {/* Live wallet pass previews */}
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-2">
+                          <Smartphone className="w-3.5 h-3.5" />
+                          What their punch card looks like
+                        </p>
+                        <PassPreviews
+                          businessName={businessName}
+                          reward={rewardDescription}
+                          punchesRequired={punchesRequired}
+                          brandColor={brandColor}
+                          logoUrl={logoUrl}
+                        />
                       </div>
 
                       {/* Notification preview */}

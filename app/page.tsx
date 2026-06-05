@@ -22,7 +22,7 @@ export default function LandingPage() {
             href="/auth/signup"
             className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            Get started free
+            Punch In
           </Link>
         </div>
       </nav>
@@ -31,7 +31,7 @@ export default function LandingPage() {
       <section className="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
         <div className="inline-flex items-center gap-2 text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full mb-8">
           <Zap className="w-3.5 h-3.5" />
-          No app required for customers
+          No app. No hardware. No nonsense.
         </div>
         <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-900 leading-tight mb-6">
           Digital punch cards
@@ -47,9 +47,9 @@ export default function LandingPage() {
             href="/auth/signup"
             className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-700 transition-colors"
           >
-            Start free <ArrowRight className="w-5 h-5" />
+            Punch In <ArrowRight className="w-5 h-5" />
           </Link>
-          <p className="text-sm text-gray-500">No credit card required</p>
+          <p className="text-sm text-gray-500">Free for your first 40 customers — no credit card to start</p>
         </div>
       </section>
 
@@ -57,23 +57,23 @@ export default function LandingPage() {
       <section className="bg-gray-50 py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-4">How it works</h2>
-          <p className="text-center text-gray-600 mb-16">Three steps for everyone. Even your least tech-savvy customer.</p>
+          <p className="text-center text-gray-600 mb-16">Two steps. That&apos;s the whole thing.</p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
+                icon: <Star className="w-8 h-8 text-indigo-600" />,
+                title: "1. Answer two questions",
+                desc: "What's the reward, and how many visits earns it. That's your whole loyalty program.",
+              },
+              {
                 icon: <QrCode className="w-8 h-8 text-indigo-600" />,
-                title: "1. Print your QR code",
-                desc: "Set up your program in 60 seconds. Print the counter QR. Stick it by the register.",
+                title: "2. Set your QR by the register",
+                desc: "Pick your free QR display — we ship it to you, free. Set it on the counter.",
               },
               {
                 icon: <Smartphone className="w-8 h-8 text-indigo-600" />,
-                title: "2. Customer scans & joins",
-                desc: "Name + phone number. That's it. Card goes straight to Apple Wallet or Google Wallet.",
-              },
-              {
-                icon: <Star className="w-8 h-8 text-indigo-600" />,
-                title: "3. Scan, punch, reward",
-                desc: "Cashier scans the customer's phone. Punch count updates live. Reward triggers automatically.",
+                title: "3. There's no step 3",
+                desc: "That's it, you're good to go. Your customers do the work. They scan. You earn repeat customers.",
               },
             ].map((step) => (
               <div key={step.title} className="bg-white rounded-2xl p-8 shadow-sm">
@@ -93,11 +93,8 @@ export default function LandingPage() {
           {[
             { title: "Apple Wallet & Google Wallet", desc: "Real passes that live on the phone. No separate app." },
             { title: "Anti-abuse cooldown", desc: "Prevent customers from gaming the system with rapid repeat scans." },
-            { title: "Subtract model rewards", desc: "Customer keeps leftover punches after redeeming. No one loses progress." },
             { title: "USB barcode scanner support", desc: "Works with any USB scanner plugged into any device. No special hardware." },
             { title: "Full audit trail", desc: "Every punch, redemption, and adjustment is logged forever." },
-            { title: "Undo last scan", desc: "Accidentally punched twice? Undo within 2 minutes." },
-            { title: "Manual adjustments", desc: "Add or remove punches with a reason. Useful for opening day goodwill." },
             { title: "CSV export", desc: "Your customer data is yours. Export anytime." },
           ].map((f) => (
             <div key={f.title} className="flex gap-4 p-5 rounded-xl border border-gray-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-colors">
@@ -115,19 +112,19 @@ export default function LandingPage() {
       <section className="bg-indigo-600 text-white py-20 px-6 text-center">
         <h2 className="text-3xl font-bold mb-4">Ready to go cardless?</h2>
         <p className="text-indigo-200 mb-8 max-w-md mx-auto">
-          Set up your loyalty program in under 5 minutes. Your first customer visit can happen today.
+          Set up your loyalty program in less than 60 seconds. Your first customer visit can happen today.
         </p>
         <Link
           href="/auth/signup"
           className="inline-flex items-center gap-2 bg-white text-indigo-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-50 transition-colors"
         >
-          Get started free <ArrowRight className="w-5 h-5" />
+          Punch In <ArrowRight className="w-5 h-5" />
         </Link>
       </section>
 
       {/* Footer */}
       <footer className="border-t py-8 px-6 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} Punched.me. Built for local business.
+        © {new Date().getFullYear()} Punched.me. Built for dope businesses.
       </footer>
     </div>
   );

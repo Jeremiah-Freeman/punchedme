@@ -180,12 +180,21 @@ function buildPassJson(opts: ApplePassOptions) {
     ],
 
     storeCard: {
+      // Top-right corner counter, like "PROGRESS 9" on big-brand passes
+      headerFields: [
+        {
+          key: "progress",
+          label: "PUNCHES",
+          value: rewardReady ? "🎉" : `${currentPunches} / ${punchesRequired}`,
+          textAlignment: "PKTextAlignmentRight",
+        },
+      ],
       primaryFields: [
         {
-          key: "punches",
-          label: rewardName,
-          value: rewardReady ? "🎉 REWARD READY" : `${currentPunches} / ${punchesRequired}`,
-          textAlignment: "PKTextAlignmentCenter",
+          key: "reward",
+          label: "REWARD",
+          value: rewardReady ? `🎉 ${rewardName} — ready!` : rewardName,
+          textAlignment: "PKTextAlignmentLeft",
         },
       ],
       secondaryFields: [
