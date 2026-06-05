@@ -26,10 +26,10 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
-        <div className="inline-flex items-center gap-2 text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full mb-8">
-          <Zap className="w-3.5 h-3.5" />
-          No app. No hardware. No nonsense.
-        </div>
+        <p className="text-sm text-gray-400 mb-6">
+          Join soon-to-be tens of thousands of businesses{" "}
+          <span className="text-gray-300">(think cosmic time scales)</span>
+        </p>
         <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-900 leading-tight mb-6">
           Digital punch cards
           <br />
@@ -39,14 +39,13 @@ export default function LandingPage() {
           Replace paper punch cards with Apple Wallet and Google Wallet passes.
           Customers scan a QR code — no app, no account, no friction.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex flex-col items-center gap-3">
           <Link
             href="/auth/signup"
             className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-700 transition-colors"
           >
             Punch In <ArrowRight className="w-5 h-5" />
           </Link>
-          <p className="text-sm text-gray-500">Free for your first 40 customers — no credit card to start</p>
         </div>
       </section>
 
