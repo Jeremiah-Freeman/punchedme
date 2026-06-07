@@ -22,6 +22,15 @@ export async function POST(request: NextRequest) {
     const db = createAdminClient();
     const normalizedPhone = normalizePhone(phoneNumber);
 
+    // Validate phone — must be 10 or 11 digits after stripping non-numeric
+    const digits = phoneNumber.replace(/\D/g, "");
+    if (digits.length < 10 || digits.length > 11) {
+      return NextResponse.json(
+        { error: "Please enter a valid 10-digit phone number." },
+        { status: 400 }
+      );
+    }
+
     // Find business
     const { data: business, error: bizErr } = await db
       .from("businesses")
