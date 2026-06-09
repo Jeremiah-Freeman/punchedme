@@ -98,10 +98,12 @@ export function SocialLoginButtons() {
         <p className="text-xs text-red-600 text-center">{error}</p>
       )}
 
-      <div className="flex items-center gap-3 py-1">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-xs text-gray-400">or use email</span>
-        <div className="flex-1 h-px bg-gray-200" />
+      <div className="flex items-center py-1 max-w-[75%] mx-auto">
+        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
+        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to right, transparent, #6366f1)" }} />
+        <span className="text-xs text-gray-400 px-1 shrink-0">or use email</span>
+        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to left, transparent, #6366f1)" }} />
+        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
       </div>
     </div>
   );

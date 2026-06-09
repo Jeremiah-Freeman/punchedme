@@ -15,11 +15,11 @@ export default function LandingPage() {
         </Link>
       </nav>
       <div className="flex items-center px-6 max-w-6xl mx-auto">
-        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6b7280" }} />
-        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to right, transparent, #6b7280)" }} />
-        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#6b7280" }} />
-        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to left, transparent, #6b7280)" }} />
-        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6b7280" }} />
+        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
+        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to right, transparent, #6366f1)" }} />
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#6366f1" }} />
+        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to left, transparent, #6366f1)" }} />
+        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
       </div>
 
       {/* Hero */}
@@ -55,7 +55,7 @@ export default function LandingPage() {
             alignTop: true,
             noSeparator: true,
             noBullets: true,
-            bullets: ["Choose your free QR display", "SUBTITLE:(We got you)", "", ""] as string[],
+            bullets: ["Choose your free QR display", "SUBTITLE:(We got you)", "•", ""] as string[],
             closing: "You're done",
           },
           {
@@ -63,27 +63,24 @@ export default function LandingPage() {
             alignTop: true,
             noSeparator: true,
             noBullets: true,
-            bullets: ["TITLE:There's no step three", "You're good to go", "", "Your customers do the work for you"] as string[],
+            bullets: ["TITLE:There's no step three", "You're good to go", "•", "Your customers do the work for you", "", "Your QR code is on the way"] as string[],
             closing: null as string | null,
           },
         ].map((s) => (
           <div
             key={s.step}
-            className={["rounded-full border-2 border-indigo-400 flex flex-col items-center text-center w-full", s.alignTop ? "justify-start" : "justify-center"].join(" ")}
+            className="relative rounded-full border-2 border-indigo-400 flex flex-col items-center justify-center text-center w-full"
             style={{
               aspectRatio: "1",
-              paddingTop: s.alignTop ? "max(60px, 12vw)" : "clamp(32px, 7vw, 160px)",
-              paddingBottom: "clamp(32px, 7vw, 160px)",
-              paddingLeft: "clamp(32px, 7vw, 160px)",
-              paddingRight: "clamp(32px, 7vw, 160px)",
+              padding: "clamp(32px, 7vw, 160px)",
             }}
           >
-            <p style={{ fontSize: "max(32px, 4.4vw)", marginBottom: "max(12px, 1.5vw)" }} className="font-bold tracking-widest text-indigo-500 uppercase">
+            <p style={{ position: "absolute", top: "max(60px, 12vw)", fontSize: "max(32px, 4.4vw)" }} className="font-bold tracking-widest text-indigo-500 uppercase">
               {s.step.replace(/\d+/, "")}
-              <span className="num">{s.step.match(/\d+/)?.[0]}</span>
+              <span className="num" style={{ fontWeight: 300, WebkitTextStroke: "0.4px currentColor" }}>{s.step.match(/\d+/)?.[0]}</span>
             </p>
             {s.bullets ? (
-              <div className={s.alignTop ? "flex flex-col flex-1 items-center justify-center" : "flex flex-col items-center"} style={{ gap: "max(8px, 1vw)" }}>
+              <div className="flex flex-col items-center" style={{ gap: "max(8px, 1vw)" }}>
                 {s.bullets.map((b, i) =>
                   b === "" ? (
                     <div key={i} style={{ height: "max(10px, 1.2vw)" }} />
@@ -106,6 +103,15 @@ export default function LandingPage() {
           </div>
         ))}
       </section>
+
+      {/* Tiny divider between steps and signup */}
+      <div className="flex items-center justify-center w-32 mx-auto py-2">
+        <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
+        <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to right, transparent, #6366f1)" }} />
+        <span className="rounded-full shrink-0" style={{ width: "3px", height: "3px", background: "#6366f1" }} />
+        <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to left, transparent, #6366f1)" }} />
+        <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
+      </div>
 
       {/* Signup */}
       <section className="px-6 pt-4 pb-20 flex flex-col items-center gap-6">

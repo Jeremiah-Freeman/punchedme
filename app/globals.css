@@ -121,7 +121,7 @@
 /* Numbers: always Helvetica Neue — use <span className="num"> on any digit */
 .num {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 200;
+  /* weight intentionally inherited so digits match the surrounding text */
   letter-spacing: 0;
 }
 
