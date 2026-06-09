@@ -8,8 +8,8 @@ export const alt = "Punched.me — Digital punch cards without the stupid card."
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Embed the "Do you have your punch card?" hero illustration (whitespace-trimmed, ~3:1)
-const hero = readFileSync(join(process.cwd(), "public/do-you-trimmed.png"));
+// Embed the "Do you have your punch card?" hero illustration, exactly as provided
+const hero = readFileSync(join(process.cwd(), "public/do-you-have-your-punch-card.png"));
 const heroSrc = `data:image/png;base64,${hero.toString("base64")}`;
 
 export default function Image() {
@@ -28,7 +28,7 @@ export default function Image() {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={heroSrc} width={920} height={304} alt="Do you have your punch card?" style={{ objectFit: "contain", marginBottom: 28 }} />
+        <img src={heroSrc} width={460} height={368} alt="Do you have your punch card?" style={{ objectFit: "contain", marginBottom: 16 }} />
         <div
           style={{
             display: "flex",
@@ -37,11 +37,12 @@ export default function Image() {
             textAlign: "center",
           }}
         >
-          <div style={{ fontSize: 60, fontWeight: 700, color: "#111827", lineHeight: 1.1 }}>
-            Digital punch cards
+          <div style={{ display: "flex", whiteSpace: "nowrap", fontSize: 44, fontWeight: 700, lineHeight: 1.2 }}>
+            <span style={{ color: "#111827" }}>Digital punch cards</span>
+            <span style={{ color: "#6366f1", marginLeft: 16 }}>without the stupid . . .</span>
           </div>
-          <div style={{ fontSize: 60, fontWeight: 700, color: "#6366f1", lineHeight: 1.1 }}>
-            without the stupid…punch cards
+          <div style={{ fontSize: 44, fontWeight: 700, color: "#6366f1", lineHeight: 1.2 }}>
+            punch cards
           </div>
         </div>
       </div>
