@@ -118,6 +118,13 @@
   }
 }
 
+/* Numbers: always Helvetica Neue — use <span className="num"> on any digit */
+.num {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 200;
+  letter-spacing: 0;
+}
+
 /* Raleway weight scale: body = 200, "bold" = two notches up (400) */
 @layer utilities {
   .font-normal {

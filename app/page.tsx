@@ -1,126 +1,124 @@
 import Link from "next/link";
-import { ArrowRight, Smartphone, QrCode, Star, Zap } from "lucide-react";
 import RecoveryRedirect from "./RecoveryRedirect";
-import { Logo } from "@/components/Logo";
+import HeroSignupForm from "./HeroSignupForm";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Forwards misrouted password-reset links to /auth/reset-password */}
       <RecoveryRedirect />
+
       {/* Nav */}
-      <nav className="border-b px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
-        <Logo size={36} wordmark />
-        <div className="flex items-center gap-4">
-          <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900">
-            Log in
-          </Link>
-          <Link
-            href="/auth/signup"
-            className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Punch In
-          </Link>
-        </div>
+      <nav className="px-6 py-4 flex items-center justify-between w-full">
+        <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(20px, 3.5vw, 32px)", width: "auto" }} />
+        <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900">
+          Log in
+        </Link>
       </nav>
+      <div className="flex items-center px-6 max-w-6xl mx-auto">
+        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6b7280" }} />
+        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to right, transparent, #6b7280)" }} />
+        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#6b7280" }} />
+        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to left, transparent, #6b7280)" }} />
+        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6b7280" }} />
+      </div>
 
       {/* Hero */}
-      <section className="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
-        <p className="text-sm text-gray-400 mb-6">
-          Join soon-to-be tens of thousands of businesses{" "}
-          <span className="text-gray-300">(think cosmic time scales)</span>
-        </p>
-        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-gray-900 leading-tight mb-6">
-          Digital punch cards
-          <br />
-          <span className="text-indigo-600">without the stupid card.</span>
+      <section className="text-center px-6 pt-16 pb-10">
+        <h1 className="font-extrabold leading-tight tracking-tight mb-4"
+          style={{ fontSize: "clamp(17px, 4.5vw, 52px)", whiteSpace: "nowrap" }}>
+          Digital punch cards<br />
+          <span className="text-indigo-600">without the stupid...punch cards</span>
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-          Replace paper punch cards with Apple Wallet and Google Wallet passes.
-          Customers scan a QR code — no app, no account, no friction.
-        </p>
-        <div className="flex flex-col items-center gap-3">
-          <Link
-            href="/auth/signup"
-            className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-700 transition-colors"
+        <div className="flex flex-col items-center" style={{ gap: "3px" }}>
+          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(18px, 3.5vw, 42px)", whiteSpace: "nowrap" }}>
+            Customers scan a QR code
+          </span>
+          <span className="text-gray-500" style={{ fontSize: "clamp(11px, 2.1vw, 25px)", whiteSpace: "nowrap" }}>
+            • No app &nbsp;•&nbsp; No login &nbsp;•&nbsp; No friction
+          </span>
+        </div>
+      </section>
+
+      {/* Steps */}
+      <section className="flex flex-col items-center gap-8 px-4 py-10">
+        {[
+          {
+            step: "Step 1",
+            alignTop: true,
+            noSeparator: true,
+            noBullets: true,
+            bullets: ["Add your business", "•", "Add Reward", "", ""] as string[],
+            closing: "That's it",
+          },
+          {
+            step: "Step 2",
+            alignTop: true,
+            noSeparator: true,
+            noBullets: true,
+            bullets: ["Choose your free QR display", "SUBTITLE:(We got you)", "", ""] as string[],
+            closing: "You're done",
+          },
+          {
+            step: "Step 3",
+            alignTop: true,
+            noSeparator: true,
+            noBullets: true,
+            bullets: ["TITLE:There's no step three", "You're good to go", "", "Your customers do the work for you"] as string[],
+            closing: null as string | null,
+          },
+        ].map((s) => (
+          <div
+            key={s.step}
+            className={["rounded-full border-2 border-indigo-400 flex flex-col items-center text-center w-full", s.alignTop ? "justify-start" : "justify-center"].join(" ")}
+            style={{
+              aspectRatio: "1",
+              paddingTop: s.alignTop ? "max(60px, 12vw)" : "clamp(32px, 7vw, 160px)",
+              paddingBottom: "clamp(32px, 7vw, 160px)",
+              paddingLeft: "clamp(32px, 7vw, 160px)",
+              paddingRight: "clamp(32px, 7vw, 160px)",
+            }}
           >
-            Punch In <ArrowRight className="w-5 h-5" />
-          </Link>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="bg-gray-50 py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">How it works</h2>
-          <p className="text-center text-gray-600 mb-16">Two steps. That&apos;s the whole thing.</p>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <Star className="w-8 h-8 text-indigo-600" />,
-                title: "1. Answer two questions",
-                desc: "What's the reward, and how many visits earns it. That's your whole loyalty program.",
-              },
-              {
-                icon: <QrCode className="w-8 h-8 text-indigo-600" />,
-                title: "2. Set your QR by the register",
-                desc: "Pick your free QR display — we ship it to you, free. Set it on the counter.",
-              },
-              {
-                icon: <Smartphone className="w-8 h-8 text-indigo-600" />,
-                title: "3. There's no step 3",
-                desc: "That's it, you're good to go. Your customers do the work. They scan. You earn repeat customers.",
-              },
-            ].map((step) => (
-              <div key={step.title} className="bg-white rounded-2xl p-8 shadow-sm">
-                <div className="mb-4">{step.icon}</div>
-                <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{step.desc}</p>
+            <p style={{ fontSize: "max(32px, 4.4vw)", marginBottom: "max(12px, 1.5vw)" }} className="font-bold tracking-widest text-indigo-500 uppercase">
+              {s.step.replace(/\d+/, "")}
+              <span className="num">{s.step.match(/\d+/)?.[0]}</span>
+            </p>
+            {s.bullets ? (
+              <div className={s.alignTop ? "flex flex-col flex-1 items-center justify-center" : "flex flex-col items-center"} style={{ gap: "max(8px, 1vw)" }}>
+                {s.bullets.map((b, i) =>
+                  b === "" ? (
+                    <div key={i} style={{ height: "max(10px, 1.2vw)" }} />
+                  ) : b === "•" ? (
+                    <p key={i} style={{ fontSize: "max(18px, 2.8vw)" }} className="text-gray-400">•</p>
+                  ) : b.startsWith("SUBTITLE:") ? (
+                    <p key={i} style={{ fontSize: "max(16px, 2.4vw)", lineHeight: 1.5 }} className="text-gray-400">{b.replace("SUBTITLE:", "")}</p>
+                  ) : b.startsWith("TITLE:") ? (
+                    <p key={i} style={{ fontSize: "max(24px, 3.6vw)", lineHeight: 1.2, marginBottom: "max(6px, 0.8vw)" }} className="font-bold text-gray-900">{b.replace("TITLE:", "")}</p>
+                  ) : (
+                    <p key={i} style={{ fontSize: "max(18px, 2.8vw)", lineHeight: 1.5 }} className="text-gray-700">{s.noBullets ? "" : "• "}{b}</p>
+                  )
+                )}
+                {!s.noSeparator && (
+                  <p style={{ fontSize: "max(18px, 2.8vw)" }} className="text-gray-400">•</p>
+                )}
+                {s.closing && <p style={{ fontSize: "max(18px, 2.8vw)", lineHeight: 1.5 }} className="font-semibold text-gray-900">{s.closing}</p>}
               </div>
-            ))}
+            ) : null}
           </div>
-        </div>
+        ))}
       </section>
 
-      {/* Features */}
-      <section className="py-20 px-6 max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-16">Everything you need, nothing you don&apos;t</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {[
-            { title: "Apple Wallet & Google Wallet", desc: "Real passes that live on the phone. No separate app." },
-            { title: "Anti-abuse cooldown", desc: "Prevent customers from gaming the system with rapid repeat scans." },
-            { title: "USB barcode scanner support", desc: "Works with any USB scanner plugged into any device. No special hardware." },
-            { title: "Full audit trail", desc: "Every punch, redemption, and adjustment is logged forever." },
-            { title: "CSV export", desc: "Your customer data is yours. Export anytime." },
-          ].map((f) => (
-            <div key={f.title} className="flex gap-4 p-5 rounded-xl border border-gray-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-colors">
-              <div className="mt-0.5 text-indigo-600 font-bold text-lg">✓</div>
-              <div>
-                <div className="font-semibold text-gray-900 mb-1">{f.title}</div>
-                <div className="text-sm text-gray-600">{f.desc}</div>
-              </div>
-            </div>
-          ))}
+      {/* Signup */}
+      <section className="px-6 pt-4 pb-20 flex flex-col items-center gap-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">Create your account</h2>
+          <p className="text-sm text-gray-400">Set up your loyalty program in under <span className="num">60</span> seconds.</p>
         </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-indigo-600 text-white py-20 px-6 text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to go cardless?</h2>
-        <p className="text-indigo-200 mb-8 max-w-md mx-auto">
-          Set up your loyalty program in less than 60 seconds. Your first customer visit can happen today.
-        </p>
-        <Link
-          href="/auth/signup"
-          className="inline-flex items-center gap-2 bg-white text-indigo-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-50 transition-colors"
-        >
-          Punch In <ArrowRight className="w-5 h-5" />
-        </Link>
+        <HeroSignupForm />
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 px-6 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} Punched.me. Built for dope businesses.
+      <footer className="border-t py-8 px-6 text-center text-sm text-gray-400">
+        © <span className="num">{new Date().getFullYear()}</span> Punched.me. Built for dope businesses.
       </footer>
     </div>
   );
