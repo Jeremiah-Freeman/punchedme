@@ -8,9 +8,9 @@ export const alt = "Punched.me — Digital punch cards without the stupid card."
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Embed the purple "Punched" wordmark (already in brand font)
-const logo = readFileSync(join(process.cwd(), "public/punched-only.png"));
-const logoSrc = `data:image/png;base64,${logo.toString("base64")}`;
+// Embed the "Do you have your punch card?" hero illustration (whitespace-trimmed, ~3:1)
+const hero = readFileSync(join(process.cwd(), "public/do-you-trimmed.png"));
+const heroSrc = `data:image/png;base64,${hero.toString("base64")}`;
 
 export default function Image() {
   return new ImageResponse(
@@ -24,11 +24,11 @@ export default function Image() {
           alignItems: "center",
           justifyContent: "center",
           background: "#ffffff",
-          padding: "80px",
+          padding: "40px 80px",
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={logoSrc} width={520} alt="Punched" style={{ marginBottom: 56 }} />
+        <img src={heroSrc} width={920} height={304} alt="Do you have your punch card?" style={{ objectFit: "contain", marginBottom: 28 }} />
         <div
           style={{
             display: "flex",
@@ -37,14 +37,11 @@ export default function Image() {
             textAlign: "center",
           }}
         >
-          <div style={{ fontSize: 64, fontWeight: 700, color: "#111827", lineHeight: 1.1 }}>
+          <div style={{ fontSize: 60, fontWeight: 700, color: "#111827", lineHeight: 1.1 }}>
             Digital punch cards
           </div>
-          <div style={{ fontSize: 64, fontWeight: 700, color: "#6366f1", lineHeight: 1.1, marginBottom: 36 }}>
+          <div style={{ fontSize: 60, fontWeight: 700, color: "#6366f1", lineHeight: 1.1 }}>
             without the stupid…punch cards
-          </div>
-          <div style={{ fontSize: 34, color: "#6b7280" }}>
-            No app · No login · No friction
           </div>
         </div>
       </div>
