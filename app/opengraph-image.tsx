@@ -26,7 +26,7 @@ export default function Image() {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={heroSrc} width={1200} height={630} alt="Do you have your punch card?" style={{ objectFit: "cover" }} />
+        <img src={heroSrc} width={900} height={720} alt="Do you have your punch card?" style={{ objectFit: "contain" }} />
       </div>
     ),
     { ...size }
