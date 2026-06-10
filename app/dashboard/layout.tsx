@@ -15,46 +15,15 @@ const nav = [
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // TEMP DIAGNOSTIC: capture the real error + stage instead of a blank 500.
-  let stage = "start";
-  let business: { name: string; slug: string } | null = null;
-  let userId = "";
-  try {
-    stage = "createClient";
-    const supabase = await createClient();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
 
-    stage = "getUser";
-    const { data: userData, error: userErr } = await supabase.auth.getUser();
-    if (userErr) throw new Error(`getUser returned error: ${userErr.message}`);
-    const user = userData.user;
-    if (!user) redirect("/auth/login");
-    userId = user.id;
-
-    stage = "businesses.select";
-    const { data: biz, error: bizErr } = await supabase
-      .from("businesses")
-      .select("name, slug")
-      .eq("owner_user_id", user.id)
-      .single();
-    if (bizErr) throw new Error(`businesses query error: ${bizErr.message} (code ${bizErr.code})`);
-    if (!biz) redirect("/onboarding");
-    business = biz;
-  } catch (e: unknown) {
-    const err = e as { digest?: string; message?: string; stack?: string };
-    // Let Next's redirect() pass through untouched.
-    if (typeof err?.digest === "string" && err.digest.startsWith("NEXT_REDIRECT")) {
-      throw e;
-    }
-    return (
-      <div style={{ padding: 24, fontFamily: "monospace", fontSize: 13, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-        <strong>DASHBOARD DEBUG — failed at stage: {stage}</strong>
-        {"\n"}userId: {userId || "(none)"}
-        {"\n\n"}message: {err?.message ?? String(e)}
-        {"\n\n"}stack:
-        {"\n"}{err?.stack ?? "(no stack)"}
-      </div>
-    );
-  }
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("name, slug")
+    .eq("owner_user_id", user.id)
+    .single();
 
   if (!business) redirect("/onboarding");
 

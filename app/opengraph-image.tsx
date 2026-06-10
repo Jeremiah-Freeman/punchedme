@@ -8,11 +8,16 @@ export const alt = "Do you have your punch card?";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// The photo, exactly as provided — no added text
-const hero = readFileSync(join(process.cwd(), "public/do-you-have-your-punch-card.png"));
-const heroSrc = `data:image/png;base64,${hero.toString("base64")}`;
-
 export default function Image() {
+  // Read the photo lazily INSIDE the handler. Doing this at module top-level
+  // breaks every route's metadata resolution: Next imports this module to read
+  // the OG metadata for all pages, and on dynamic routes (e.g. /dashboard) the
+  // serverless function doesn't bundle public/*, so the top-level read throws
+  // ENOENT and 500s the page. Only the OG-image function actually runs Image(),
+  // and that function does have the file.
+  const hero = readFileSync(join(process.cwd(), "public/do-you-have-your-punch-card.png"));
+  const heroSrc = `data:image/png;base64,${hero.toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
