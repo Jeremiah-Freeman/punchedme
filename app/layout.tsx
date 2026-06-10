@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Raleway } from "next/font/google";
 import "./globals.css";
 
-const raleway = Raleway({ subsets: ["latin"] });
+const raleway = Raleway({ subsets: ["latin"], variable: "--font-raleway" });
 
 const SITE_TITLE = "Punched.me — Digital punch cards without the stupid card.";
 const SHARE_TITLE = "Digital punch cards without the stupid . . . punch cards";
@@ -35,7 +35,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={raleway.className}>{children}</body>
+      <body className={raleway.variable}>{children}</body>
     </html>
   );
 }

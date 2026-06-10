@@ -49,12 +49,23 @@
   }
 }
 
+/* Force EVERY digit on the site to render in Helvetica (lining figures),
+   while all other text stays Raleway. Scoped to the 0-9 unicode range so
+   it applies automatically everywhere — no per-element .num spans needed.
+   Reason: Raleway uses old-style figures that bounce off the baseline. */
+@font-face {
+  font-family: "HelveticaDigits";
+  src: local("Helvetica Neue"), local("Helvetica"), local("Arial");
+  unicode-range: U+0030-0039;
+}
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "HelveticaDigits", var(--font-raleway), system-ui, -apple-system, sans-serif;
     font-weight: 200; /* Raleway light-thin everywhere */
   }
 }
