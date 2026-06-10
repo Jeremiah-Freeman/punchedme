@@ -44,7 +44,7 @@ export default function AssetsPage() {
 
   if (!business) {
     return (
-      <div className="p-4 sm:p-6 max-w-xl mx-auto">
+      <div className="p-6 max-w-xl mx-auto">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/3" />
           <div className="h-64 bg-gray-200 rounded-2xl" />
@@ -54,7 +54,7 @@ export default function AssetsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+    <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-1">Assets</h1>
       <p className="text-gray-500 text-sm mb-8">Download your counter QR and share your program link.</p>
 

@@ -96,7 +96,7 @@ export default function ProgramPage() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 max-w-xl mx-auto">
+      <div className="p-6 max-w-xl mx-auto">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/2" />
           <div className="h-64 bg-gray-200 rounded-2xl" />
@@ -106,13 +106,13 @@ export default function ProgramPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-xl mx-auto">
+    <div className="p-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-1">Loyalty Program</h1>
       <p className="text-gray-500 text-sm mb-8">
         {program ? "Update your reward settings." : "Create your loyalty program."}
       </p>
 
-      <form onSubmit={handleSave} className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm space-y-5">
+      <form onSubmit={handleSave} className="bg-white rounded-2xl p-6 shadow-sm space-y-5">
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
             <Gift className="w-4 h-4" /> Program name
