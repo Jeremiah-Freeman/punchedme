@@ -25,9 +25,22 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Read the session defensively: a stale/corrupt auth cookie can make
+  // getUser() throw, which would otherwise crash EVERY route (the whole site
+  // 500s for that user while logged-out visitors are fine). Treat any failure
+  // as "logged out" and clear the bad Supabase cookies so the next request is clean.
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    user = null;
+    for (const c of request.cookies.getAll()) {
+      if (c.name.startsWith("sb-")) {
+        supabaseResponse.cookies.set(c.name, "", { maxAge: 0, path: "/" });
+      }
+    }
+  }
 
   const pathname = request.nextUrl.pathname;
   const searchParams = request.nextUrl.searchParams;
