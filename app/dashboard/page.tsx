@@ -4,54 +4,72 @@ import Link from "next/link";
 import { Users, Star, Zap, ArrowRight, Download } from "lucide-react";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  // TEMP DIAGNOSTIC: surface the real error + failing stage instead of a blank 500.
+  let stage = "start";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let business: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let program: any = null;
+  let totalCustomers: number | null = 0;
+  let punchesToday: number | null = 0;
+  let rewardsRedeemed: number | null = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let recentEvents: any[] | null = [];
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("*")
-    .eq("owner_user_id", user.id)
-    .single();
+  try {
+    stage = "createClient";
+    const supabase = await createClient();
 
-  if (!business) redirect("/onboarding");
+    stage = "getUser";
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr) throw new Error(`getUser: ${userErr.message}`);
+    const user = userData.user;
+    if (!user) redirect("/auth/login");
 
-  const { data: program } = await supabase
-    .from("loyalty_programs")
-    .select("*")
-    .eq("business_id", business.id)
-    .eq("is_active", true)
-    .single();
+    stage = "businesses.select";
+    const bizRes = await supabase.from("businesses").select("*").eq("owner_user_id", user.id).single();
+    if (bizRes.error) throw new Error(`businesses: ${bizRes.error.message} (code ${bizRes.error.code})`);
+    business = bizRes.data;
+    if (!business) redirect("/onboarding");
 
-  // Stats
-  const { count: totalCustomers } = await supabase
-    .from("customers")
-    .select("id", { count: "exact", head: true })
-    .eq("business_id", business.id);
+    stage = "loyalty_programs.select";
+    const progRes = await supabase.from("loyalty_programs").select("*").eq("business_id", business.id).eq("is_active", true).single();
+    program = progRes.data; // .single() may error on 0 rows — that's fine
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    stage = "count customers";
+    const c1 = await supabase.from("customers").select("id", { count: "exact", head: true }).eq("business_id", business.id);
+    if (c1.error) throw new Error(`customers count: ${c1.error.message} (code ${c1.error.code})`);
+    totalCustomers = c1.count;
 
-  const { count: punchesToday } = await supabase
-    .from("scan_events")
-    .select("id", { count: "exact", head: true })
-    .eq("business_id", business.id)
-    .in("event_type", ["punch_added", "reward_earned"])
-    .gte("created_at", today.toISOString());
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const { count: rewardsRedeemed } = await supabase
-    .from("scan_events")
-    .select("id", { count: "exact", head: true })
-    .eq("business_id", business.id)
-    .eq("event_type", "reward_redeemed");
+    stage = "count punchesToday";
+    const c2 = await supabase.from("scan_events").select("id", { count: "exact", head: true }).eq("business_id", business.id).in("event_type", ["punch_added", "reward_earned"]).gte("created_at", today.toISOString());
+    if (c2.error) throw new Error(`punchesToday count: ${c2.error.message} (code ${c2.error.code})`);
+    punchesToday = c2.count;
 
-  // Recent scan events
-  const { data: recentEvents } = await supabase
-    .from("scan_events")
-    .select("*, customers(first_name)")
-    .eq("business_id", business.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
+    stage = "count rewardsRedeemed";
+    const c3 = await supabase.from("scan_events").select("id", { count: "exact", head: true }).eq("business_id", business.id).eq("event_type", "reward_redeemed");
+    if (c3.error) throw new Error(`rewardsRedeemed count: ${c3.error.message} (code ${c3.error.code})`);
+    rewardsRedeemed = c3.count;
+
+    stage = "recentEvents join";
+    const re = await supabase.from("scan_events").select("*, customers(first_name)").eq("business_id", business.id).order("created_at", { ascending: false }).limit(10);
+    if (re.error) throw new Error(`recentEvents join: ${re.error.message} (code ${re.error.code})`);
+    recentEvents = re.data;
+  } catch (e: unknown) {
+    const err = e as { digest?: string; message?: string; stack?: string };
+    if (typeof err?.digest === "string" && err.digest.startsWith("NEXT_REDIRECT")) throw e;
+    return (
+      <div style={{ padding: 24, fontFamily: "monospace", fontSize: 13, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+        <strong>DASHBOARD PAGE DEBUG — failed at stage: {stage}</strong>
+        {"\n\n"}message: {err?.message ?? String(e)}
+        {"\n\n"}stack:
+        {"\n"}{err?.stack ?? "(no stack)"}
+      </div>
+    );
+  }
 
   const stats = [
     { label: "Total customers", value: totalCustomers ?? 0, icon: Users, color: "text-blue-600 bg-blue-50" },
