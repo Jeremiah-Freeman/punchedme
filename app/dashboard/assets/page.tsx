@@ -54,7 +54,7 @@ export default function AssetsPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-1">Assets</h1>
       <p className="text-gray-500 text-sm mb-8">Download your counter QR and share your program link.</p>
 
@@ -109,7 +109,7 @@ export default function AssetsPage() {
           Share this link in emails, social media, or on receipts.
         </p>
         <div className="flex gap-2">
-          <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-700 truncate">
+          <div className="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-700 truncate">
             {joinUrl}
           </div>
           <button
@@ -137,7 +137,7 @@ export default function AssetsPage() {
           Open this on any phone, iPad, or laptop at the register. Bookmark it.
         </p>
         <div className="flex gap-2">
-          <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-700 truncate">
+          <div className="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-700 truncate">
             {scanUrl}
           </div>
           <a
