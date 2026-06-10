@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Landing page', () => {
-  test('has Punch In CTA that goes to signup', async ({ page }) => {
+  test('has inline signup with a Punch In button', async ({ page }) => {
     await page.goto('/');
-    const cta = page.getByRole('link', { name: /punch in/i }).first();
-    await expect(cta).toBeVisible();
-    await cta.click();
-    await expect(page).toHaveURL(/\/auth\/signup/);
+    // Redesigned landing: signup happens inline (email + password + Punch In button)
+    await expect(page.getByRole('button', { name: /punch in/i }).first()).toBeVisible();
+    await expect(page.getByPlaceholder('Email address')).toBeVisible();
+    await expect(page.getByPlaceholder(/min 8/i)).toBeVisible();
   });
 
   test('has no broken internal links (first 15)', async ({ page }) => {
@@ -37,15 +37,14 @@ test.describe('Landing page', () => {
     }
   });
 
-  test('displays Mo bear logo', async ({ page }) => {
+  test('displays Punched logo', async ({ page }) => {
     await page.goto('/');
-    // Logo image should be present
-    const logo = page.locator('img[alt*="logo" i], img[src*="logo"]').first();
+    const logo = page.locator('img[alt="Punched"], img[src*="punched"]').first();
     await expect(logo).toBeVisible();
   });
 
-  test('"There\'s no step 3" copy is present', async ({ page }) => {
+  test('"There\'s no step three" copy is present', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText(/no step 3/i)).toBeVisible();
+    await expect(page.getByText(/no step three/i)).toBeVisible();
   });
 });

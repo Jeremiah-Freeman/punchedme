@@ -2,10 +2,24 @@ import { test, expect, devices } from '@playwright/test';
 
 test.use({ ...devices['iPhone 15'] });
 
+// Guard against horizontal overflow on phones across public routes.
+for (const path of ['/', '/auth/login', '/auth/signup', '/b/kawfi/join']) {
+  test(`no horizontal overflow on mobile: ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    const overflow = await page.evaluate(() => {
+      const doc = document.documentElement;
+      // allow 1px rounding slack
+      return doc.scrollWidth - doc.clientWidth;
+    });
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
+}
+
 test('landing page renders on mobile', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('body')).toBeVisible();
-  await expect(page.getByRole('link', { name: /punch in/i }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /punch in/i }).first()).toBeVisible();
 });
 
 test('login page is usable on mobile', async ({ page }) => {

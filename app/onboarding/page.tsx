@@ -19,8 +19,8 @@ function HowItWorks({ onStart }: { onStart: () => void }) {
   ];
 
   return (
-    <div className="bg-white rounded-3xl p-8 md:p-12 shadow-sm border border-gray-100 text-center">
-      <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-10">
+    <div className="bg-white rounded-3xl p-6 sm:p-8 md:p-12 shadow-sm border border-gray-100 text-center">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-10">
         How Punched works
       </h1>
 
@@ -482,7 +482,7 @@ export default function OnboardingPage() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="w-1/2 mx-auto block bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+                        className="w-full sm:w-1/2 mx-auto block bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
                         style={{ fontSize: "1rem" }}
                       >
                         {loading ? "Saving…" : "Last Step"}
@@ -685,7 +685,7 @@ export default function OnboardingPage() {
                         <button
                           type="submit"
                           disabled={sendingRequest || !customRequest.trim()}
-                          className="w-1/2 mx-auto flex items-center justify-center gap-1.5 bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+                          className="w-full sm:w-1/2 mx-auto flex items-center justify-center gap-1.5 bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
                           style={{ fontSize: "1rem" }}
                         >
                           <Send className="w-3 h-3" />

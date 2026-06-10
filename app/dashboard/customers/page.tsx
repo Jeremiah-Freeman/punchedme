@@ -82,18 +82,18 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
+      <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
           <h1 className="text-2xl font-bold">Customers</h1>
           <p className="text-gray-500 text-sm mt-0.5">{customers.length} total members</p>
         </div>
         <button
           onClick={exportCSV}
-          className="flex items-center gap-2 text-sm text-gray-600 border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          className="shrink-0 flex items-center gap-2 text-sm text-gray-600 border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
         >
           <Download className="w-4 h-4" />
-          Export CSV
+          <span className="hidden sm:inline">Export CSV</span>
         </button>
       </div>
 
@@ -118,7 +118,60 @@ export default function CustomersPage() {
           {search ? "No customers match your search." : "No customers yet. Share your join QR to get started!"}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <>
+        {/* Mobile card list */}
+        <div className="md:hidden space-y-3">
+          {filtered.map((c) => {
+            const rewardReady = c.current_punches >= c.punches_required;
+            return (
+              <div key={c.id} className="bg-white rounded-2xl shadow-sm p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-9 h-9 shrink-0 rounded-full bg-indigo-100 text-indigo-700 text-sm flex items-center justify-center font-semibold">
+                      {c.first_name[0]?.toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{c.first_name}</p>
+                      <p className="text-xs text-gray-500 truncate">{formatPhone(c.phone_number)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`font-semibold text-sm ${rewardReady ? "text-green-600" : "text-gray-900"}`}>
+                      {c.current_punches}/{c.punches_required}
+                    </span>
+                    {rewardReady && <span className="text-xs">🎉</span>}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                  <span className="text-xs text-gray-400">
+                    {c.last_visit ? `Last visit ${timeAgo(c.last_visit)}` : `Joined ${new Date(c.created_at).toLocaleDateString()}`}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => adjust(c.id, c.program_id, -1)}
+                      disabled={adjusting === c.id || c.current_punches === 0}
+                      className="w-9 h-9 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                      aria-label="Remove punch"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => adjust(c.id, c.program_id, 1)}
+                      disabled={adjusting === c.id}
+                      className="w-9 h-9 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 transition-colors"
+                      aria-label="Add punch"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block bg-white rounded-2xl shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50">
@@ -187,6 +240,7 @@ export default function CustomersPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

@@ -6,12 +6,12 @@ import { SignOutButton } from "./SignOutButton";
 import { Logo } from "@/components/Logo";
 
 const nav = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/customers", label: "Customers", icon: Users },
-  { href: "/dashboard/program", label: "Program", icon: Package },
-  { href: "/dashboard/locations", label: "Locations", icon: MapPin },
-  { href: "/dashboard/scan", label: "Scan Mode", icon: QrCode },
-  { href: "/dashboard/assets", label: "Assets", icon: Settings },
+  { href: "/dashboard", label: "Overview", short: "Home", icon: LayoutDashboard },
+  { href: "/dashboard/customers", label: "Customers", short: "People", icon: Users },
+  { href: "/dashboard/program", label: "Program", short: "Program", icon: Package },
+  { href: "/dashboard/locations", label: "Locations", short: "Places", icon: MapPin },
+  { href: "/dashboard/scan", label: "Scan Mode", short: "Scan", icon: QrCode },
+  { href: "/dashboard/assets", label: "Assets", short: "Assets", icon: Settings },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -55,15 +55,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </aside>
 
       {/* Mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t md:hidden z-50 flex">
-        {nav.map(({ href, label, icon: Icon }) => (
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t md:hidden z-50 flex pb-[env(safe-area-inset-bottom)]">
+        {nav.map(({ href, short, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className="flex-1 flex flex-col items-center gap-1 py-3 text-gray-600 hover:text-indigo-600"
+            className="flex-1 min-w-0 flex flex-col items-center gap-1 py-2.5 text-gray-600 hover:text-indigo-600 active:text-indigo-600"
           >
-            <Icon className="w-5 h-5" />
-            <span className="text-xs">{label}</span>
+            <Icon className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-none truncate max-w-full">{short}</span>
           </Link>
         ))}
       </div>

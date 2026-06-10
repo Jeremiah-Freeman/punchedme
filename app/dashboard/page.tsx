@@ -60,8 +60,8 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{business.name}</h1>
           <p className="text-gray-500 text-sm mt-0.5">
@@ -74,14 +74,14 @@ export default async function DashboardPage() {
           <a
             href="/api/business/report"
             download
-            className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
           >
             <Download className="w-4 h-4" />
             Export report
           </a>
           <Link
             href="/dashboard/scan"
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
           >
             Scan Mode <ArrowRight className="w-4 h-4" />
           </Link>
@@ -89,28 +89,28 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
         {stats.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white rounded-2xl p-5 shadow-sm">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${color}`}>
+          <div key={label} className="bg-white rounded-2xl p-3 sm:p-5 shadow-sm">
+            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mb-2 sm:mb-3 ${color}`}>
               <Icon className="w-5 h-5" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{value}</p>
-            <p className="text-sm text-gray-500 mt-1">{label}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">{value}</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-tight">{label}</p>
           </div>
         ))}
       </div>
 
       {/* Quick actions */}
       {!program && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8 flex items-center justify-between">
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p className="font-semibold text-amber-900">No loyalty program yet</p>
             <p className="text-sm text-amber-700 mt-0.5">Set one up to start accepting customers.</p>
           </div>
           <Link
             href="/dashboard/program"
-            className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-amber-700 transition-colors"
+            className="text-center shrink-0 bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-amber-700 transition-colors"
           >
             Set up program
           </Link>
