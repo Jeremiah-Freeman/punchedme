@@ -1,18 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, Settings, QrCode, Package, MapPin } from "lucide-react";
 import { SignOutButton } from "./SignOutButton";
 import { Logo } from "@/components/Logo";
-
-const nav = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/customers", label: "Customers", icon: Users },
-  { href: "/dashboard/program", label: "Program", icon: Package },
-  { href: "/dashboard/locations", label: "Locations", icon: MapPin },
-  { href: "/dashboard/scan", label: "Scan Mode", icon: QrCode },
-  { href: "/dashboard/assets", label: "Assets", icon: Settings },
-];
+import { nav } from "./nav";
+import { MobileNav } from "./MobileNav";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -54,19 +46,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       </aside>
 
-      {/* Mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t md:hidden z-50 flex">
-        {nav.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex-1 flex flex-col items-center gap-1 py-3 text-gray-600 hover:text-indigo-600"
-          >
-            <Icon className="w-5 h-5" />
-            <span className="text-xs">{label}</span>
-          </Link>
-        ))}
-      </div>
+      {/* Mobile bottom nav — scrollable purple carousel */}
+      <MobileNav />
 
       {/* Main */}
       <main className="flex-1 pb-20 md:pb-0">{children}</main>
