@@ -1,111 +1,103 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Camera, Keyboard, Phone, RotateCcw, CheckCircle2, Gift, Ban, AlertTriangle, XCircle } from "lucide-react";
+import { Camera, Keyboard, Phone, RotateCcw, CheckCircle2, Gift, Ban, XCircle } from "lucide-react";
 import type { ScanResult } from "@/lib/types";
-import { KioskSetupPanel } from "./KioskSetupPanel";
 
 type ScanMode = "camera" | "usb" | "manual";
 type ScanState = "idle" | "scanning" | "success" | "reward_available" | "blocked" | "invalid";
 
-interface BusinessInfo {
-  id: string;
-  name: string;
-}
-
-export default function ScanPage() {
+/**
+ * The unattended-kiosk version of Scan Mode. Same scanning UX as the dashboard
+ * page, but authorized only by the device token in the URL — no dashboard, no
+ * business lookup, no settings. Talks exclusively to /api/scans/kiosk.
+ */
+export function KioskScan({
+  deviceToken,
+  businessName,
+  label,
+}: {
+  deviceToken: string;
+  businessName: string;
+  label: string;
+}) {
   const [mode, setMode] = useState<ScanMode>("usb");
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [result, setResult] = useState<ScanResult | null>(null);
-  const [business, setBusiness] = useState<BusinessInfo | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [lastEventId, setLastEventId] = useState<string | null>(null);
-  const [undoCountdown, setUndoCountdown] = useState(0);
   const [phoneSearch, setPhoneSearch] = useState("");
   const [cameraError, setCameraError] = useState("");
+  const [disconnected, setDisconnected] = useState(false);
 
-  // USB scanner input
   const usbInputRef = useRef<HTMLInputElement>(null);
   const usbBuffer = useRef("");
   const usbTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Camera scanner
   const cameraContainerId = "qr-reader";
   const scannerRef = useRef<{ clear: () => void } | null>(null);
 
-  // Fetch business info
-  useEffect(() => {
-    fetch("/api/business/me")
-      .then((r) => r.json())
-      .then((d) => setBusiness(d.business ?? null));
-  }, []);
-
-  // Undo countdown
-  useEffect(() => {
-    if (undoCountdown <= 0) return;
-    const t = setTimeout(() => setUndoCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [undoCountdown]);
-
-  const processToken = useCallback(async (token: string) => {
-    if (!business || processing || !token.trim()) return;
-    setProcessing(true);
-
-    const cleanToken = token.trim();
-
-    try {
-      const res = await fetch("/api/scans/process", {
+  // Single authorized call to the kiosk API. A 410 means the owner revoked this
+  // device — flip into the permanent "disconnected" state so it stops scanning.
+  const kioskFetch = useCallback(
+    async (payload: Record<string, unknown>) => {
+      const res = await fetch("/api/scans/kiosk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scannedToken: cleanToken, businessId: business.id }),
+        body: JSON.stringify({ deviceToken, ...payload }),
       });
+      if (res.status === 410) setDisconnected(true);
+      return res;
+    },
+    [deviceToken]
+  );
 
-      const data: ScanResult = await res.json();
-      setResult(data);
-      setScanState(data.status as ScanState);
+  const processToken = useCallback(
+    async (token: string) => {
+      if (processing || !token.trim()) return;
+      setProcessing(true);
+      const cleanToken = token.trim();
 
-      if (data.status === "success" || data.status === "reward_available") {
-        // Store last scan event ID for undo (we'd need to return it from API, or look it up)
-        setLastEventId(null); // Would need API to return this
-        setUndoCountdown(120); // 2 minute undo window
-      }
+      try {
+        const res = await kioskFetch({ action: "punch", scannedToken: cleanToken });
+        const data: ScanResult = await res.json();
+        setResult(data);
+        setScanState(data.status as ScanState);
 
-      // Auto-reset to idle after delay (except reward states need cashier action)
-      if (data.status === "blocked" || data.status === "invalid") {
+        if (data.status === "blocked" || data.status === "invalid") {
+          setTimeout(() => {
+            setScanState("idle");
+            setResult(null);
+          }, 4000);
+        }
+      } catch {
+        setResult({
+          status: "invalid",
+          customerName: "",
+          currentPunches: 0,
+          punchesRequired: 0,
+          rewardAvailable: false,
+          message: "Network error. Try again.",
+        });
+        setScanState("invalid");
         setTimeout(() => {
           setScanState("idle");
           setResult(null);
-        }, 4000);
+        }, 3000);
+      } finally {
+        setProcessing(false);
+        if (mode === "usb") {
+          setTimeout(() => usbInputRef.current?.focus(), 100);
+        }
       }
-    } catch {
-      setResult({
-        status: "invalid",
-        customerName: "",
-        currentPunches: 0,
-        punchesRequired: 0,
-        rewardAvailable: false,
-        message: "Network error. Try again.",
-      });
-      setScanState("invalid");
-      setTimeout(() => {
-        setScanState("idle");
-        setResult(null);
-      }, 3000);
-    } finally {
-      setProcessing(false);
-      // Re-focus USB input
-      if (mode === "usb") {
-        setTimeout(() => usbInputRef.current?.focus(), 100);
-      }
-    }
-  }, [business, processing, mode]);
+    },
+    [processing, mode, kioskFetch]
+  );
 
-  // USB barcode scanner handler
+  // USB barcode scanner handler (the primary kiosk input).
   useEffect(() => {
     if (mode !== "usb") return;
 
     function handleKeyDown(e: KeyboardEvent) {
-      // Ignore if focus is on another input (phone search, etc.)
       if (
         document.activeElement instanceof HTMLInputElement &&
         document.activeElement !== usbInputRef.current
@@ -115,16 +107,13 @@ export default function ScanPage() {
       if (e.key === "Enter") {
         const token = usbBuffer.current.trim();
         usbBuffer.current = "";
-        if (token.length > 8) {
-          processToken(token);
-        }
+        if (token.length > 8) processToken(token);
         return;
       }
 
       if (e.key.length === 1) {
         usbBuffer.current += e.key;
         clearTimeout(usbTimeout.current);
-        // Clear buffer if no more chars come in 100ms (end of barcode scan)
         usbTimeout.current = setTimeout(() => {
           usbBuffer.current = "";
         }, 100);
@@ -136,7 +125,7 @@ export default function ScanPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mode, processToken]);
 
-  // Camera scanner
+  // Camera scanner.
   useEffect(() => {
     if (mode !== "camera") {
       scannerRef.current?.clear();
@@ -150,7 +139,6 @@ export default function ScanPage() {
 
     import("html5-qrcode").then(({ Html5Qrcode }) => {
       if (!mounted) return;
-
       const qr = new Html5Qrcode(cameraContainerId);
 
       qr.start(
@@ -162,32 +150,26 @@ export default function ScanPage() {
             const url = new URL(decodedText);
             const pathParts = url.pathname.split("/");
             const passIdx = pathParts.indexOf("pass");
-            if (passIdx !== -1 && pathParts[passIdx + 1]) {
-              token = pathParts[passIdx + 1];
-            }
+            if (passIdx !== -1 && pathParts[passIdx + 1]) token = pathParts[passIdx + 1];
             const scanParam = url.searchParams.get("token");
             if (scanParam) token = scanParam;
           } catch {
-            // Not a URL — use raw token
+            // Not a URL — use raw token.
           }
           processToken(token);
         },
-        undefined // per-frame errors are normal, ignore
+        undefined
       ).catch((err: Error) => {
         if (!mounted) return;
-        const msg = err?.message ?? String(err);
-        if (msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("denied") || msg.toLowerCase().includes("notallowed")) {
-          setCameraError("Camera access denied. Go to your browser settings and allow camera access, then switch back to Camera mode.");
+        const msg = (err?.message ?? String(err)).toLowerCase();
+        if (msg.includes("permission") || msg.includes("denied") || msg.includes("notallowed")) {
+          setCameraError("Camera access denied. Allow camera access in browser settings, then switch back to Camera mode.");
         } else {
           setCameraError("Camera couldn't start. Check that nothing else is using it, then try again.");
         }
       });
 
-      scannerRef.current = {
-        clear: () => {
-          qr.stop().catch(() => {});
-        },
-      };
+      scannerRef.current = { clear: () => { qr.stop().catch(() => {}); } };
     });
 
     return () => {
@@ -200,17 +182,12 @@ export default function ScanPage() {
   async function handleRedeem() {
     if (!result?.customerId || !result?.programId) return;
     setProcessing(true);
-
     try {
-      const res = await fetch("/api/rewards/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerId: result.customerId,
-          programId: result.programId,
-        }),
+      const res = await kioskFetch({
+        action: "redeem",
+        customerId: result.customerId,
+        programId: result.programId,
       });
-
       const data = await res.json();
       if (res.ok) {
         setResult({
@@ -240,8 +217,7 @@ export default function ScanPage() {
 
   async function handlePhoneSearch(e: React.FormEvent) {
     e.preventDefault();
-    // Manual phone lookup — find customer by phone
-    const res = await fetch(`/api/customers/lookup?phone=${encodeURIComponent(phoneSearch)}`);
+    const res = await kioskFetch({ action: "lookup", phone: phoneSearch });
     if (res.ok) {
       const data = await res.json();
       if (data.token) {
@@ -251,11 +227,7 @@ export default function ScanPage() {
     }
   }
 
-  const stateConfig: Record<string, {
-    bg: string;
-    icon: React.ReactNode;
-    title: string;
-  }> = {
+  const stateConfig: Record<string, { bg: string; icon: React.ReactNode; title: string }> = {
     success: {
       bg: "bg-green-50 border-green-200",
       icon: <CheckCircle2 className="w-12 h-12 text-green-500" />,
@@ -278,13 +250,31 @@ export default function ScanPage() {
     },
   };
 
+  if (disconnected) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
+        <div className="max-w-sm text-center">
+          <div className="text-5xl mb-4">🔌</div>
+          <h1 className="text-white text-xl font-bold mb-2">Kiosk disconnected</h1>
+          <p className="text-gray-400 text-sm">
+            This scanner was turned off by the owner. Ask them to connect a new
+            kiosk from their Punched dashboard.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
       {/* Header */}
       <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
         <div>
           <span className="font-bold text-white">Scan Mode</span>
-          {business && <span className="text-gray-400 text-sm ml-2">· {business.name}</span>}
+          <span className="text-gray-400 text-sm ml-2">· {businessName}</span>
+          {label && label !== "Kiosk" && (
+            <span className="text-gray-500 text-xs ml-2">({label})</span>
+          )}
         </div>
         <div className="flex gap-2">
           {(["usb", "camera", "manual"] as ScanMode[]).map((m) => (
@@ -306,8 +296,7 @@ export default function ScanPage() {
 
       {/* Main area */}
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-
-        {/* FULL SCREEN REWARD ALERT — impossible to miss */}
+        {/* FULL SCREEN REWARD ALERT */}
         {scanState === "reward_available" && result && (
           <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-amber-400">
             <div className="text-center px-8 max-w-sm">
@@ -315,12 +304,8 @@ export default function ScanPage() {
               <h1 className="text-5xl font-black text-white mb-3 tracking-tight drop-shadow-lg">
                 REWARD EARNED!
               </h1>
-              <p className="text-2xl text-amber-900 font-bold mb-2">
-                {result.customerName}
-              </p>
-              <p className="text-lg text-white/90 mb-8 font-medium">
-                {result.message}
-              </p>
+              <p className="text-2xl text-amber-900 font-bold mb-2">{result.customerName}</p>
+              <p className="text-lg text-white/90 mb-8 font-medium">{result.message}</p>
               <div className="flex flex-col gap-3 w-full">
                 <button
                   onClick={handleRedeem}
@@ -344,12 +329,9 @@ export default function ScanPage() {
         {scanState !== "idle" && scanState !== "reward_available" && result && (
           <div className={`w-full max-w-sm rounded-3xl border-2 p-8 text-center mb-6 ${stateConfig[scanState]?.bg ?? "bg-gray-100"}`}>
             <div className="flex justify-center mb-4">{stateConfig[scanState]?.icon}</div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
-              {stateConfig[scanState]?.title}
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{stateConfig[scanState]?.title}</h2>
             <p className="text-gray-700 mb-4">{result.message}</p>
 
-            {/* Progress bar */}
             {result.punchesRequired > 0 && (
               <div className="mb-4">
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -359,15 +341,12 @@ export default function ScanPage() {
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
                     className="bg-indigo-500 rounded-full h-3 transition-all"
-                    style={{
-                      width: `${Math.min(100, (result.currentPunches / result.punchesRequired) * 100)}%`,
-                    }}
+                    style={{ width: `${Math.min(100, (result.currentPunches / result.punchesRequired) * 100)}%` }}
                   />
                 </div>
               </div>
             )}
 
-            {/* 1-away nudge */}
             {scanState === "success" && result.punchesRequired > 0 &&
               result.currentPunches === result.punchesRequired - 1 && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-4 text-amber-800 text-sm font-semibold">
@@ -385,19 +364,16 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Idle state / scanner UI */}
+        {/* Idle / scanner UI */}
         {scanState === "idle" && (
           <div className="w-full max-w-sm text-center">
             {mode === "usb" && (
               <div className="bg-gray-800 rounded-3xl p-8">
                 <Keyboard className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-                <h2 className="text-white text-lg font-semibold mb-2">
-                  Ready to scan
-                </h2>
+                <h2 className="text-white text-lg font-semibold mb-2">Ready to scan</h2>
                 <p className="text-gray-400 text-sm mb-6">
                   Point your USB barcode scanner at the customer&apos;s QR code. It will process automatically.
                 </p>
-                {/* Hidden input for USB scanner (also ensures page is focused) */}
                 <input
                   ref={usbInputRef}
                   type="text"
@@ -429,9 +405,7 @@ export default function ScanPage() {
                 ) : (
                   <>
                     <div id={cameraContainerId} className="w-full" />
-                    {processing && (
-                      <p className="text-indigo-400 text-sm mt-3">Processing scan…</p>
-                    )}
+                    {processing && <p className="text-indigo-400 text-sm mt-3">Processing scan…</p>}
                   </>
                 )}
               </div>
@@ -465,47 +439,18 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Kiosk setup — generate a scan-only link for an unattended device */}
-        {scanState === "idle" && <KioskSetupPanel />}
-
-        {/* Processing spinner */}
         {processing && scanState === "idle" && (
           <div className="flex items-center gap-2 text-gray-400 text-sm mt-4">
             <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
             Processing…
           </div>
         )}
-
-        {/* Undo banner */}
-        {undoCountdown > 0 && lastEventId && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 border border-gray-700 rounded-2xl px-5 py-3 flex items-center gap-4 shadow-xl">
-            <p className="text-white text-sm">Scanned by mistake?</p>
-            <button
-              onClick={async () => {
-                if (!lastEventId) return;
-                await fetch("/api/scans/undo", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ scanEventId: lastEventId }),
-                });
-                setUndoCountdown(0);
-                setLastEventId(null);
-                handleReset();
-              }}
-              className="flex items-center gap-1 text-indigo-400 text-sm font-semibold hover:text-indigo-300"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Undo ({undoCountdown}s)
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Tips */}
       {scanState === "idle" && mode === "usb" && (
         <div className="p-4 text-center">
           <p className="text-gray-600 text-xs">
-            Tip: Any USB barcode scanner works. The page must be focused (click here if scanning doesn&apos;t respond).
+            Tip: Any USB barcode scanner works. The page must be focused (tap here if scanning doesn&apos;t respond).
           </p>
         </div>
       )}

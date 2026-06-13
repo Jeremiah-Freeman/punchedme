@@ -39,10 +39,19 @@ off any Google account and makes the session clean to persist). Done once; it st
 
 ---
 
-## Security note (recommended follow-up)
+## Hardened path: scan-only device token (BUILT)
 Logging the Pi in as the business owner means the Pi holds a full dashboard session —
 a lost/stolen Pi = full account access. The hardened version is a **device token**: the
 owner generates a revocable, scan-only token in the dashboard, and the kiosk runs a
 dedicated `/scan/<token>` route that can ONLY add punches (no dashboard, no settings).
-Ship the simple persistent-login kiosk first; add the device token next if we want it
-appliance-grade. Tracked as a follow-up.
+
+This is now built:
+- Owner opens **Dashboard → Scan Mode → "Set up an unattended kiosk"** to generate a
+  `https://punched.me/scan/<token>` link (and to disconnect a lost device — the link
+  dies instantly).
+- The Pi's Chromium kiosk just points at that URL. No Google/email login on the Pi at
+  all, so steps 3–4 below get simpler: no persistent login session to protect.
+- Backend: `device_tokens` table (migration `004`), `/api/scans/kiosk` (token-authorized
+  punch / redeem / phone-lookup), revoke = soft `revoked_at` so history survives.
+
+One-time setup: run `supabase/migrations/004_device_tokens.sql` in the Supabase SQL Editor.
