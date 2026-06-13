@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Monitor, Copy, Check, Trash2, Plus, ChevronDown } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 interface DeviceToken {
   id: string;
@@ -128,6 +129,17 @@ export function KioskSetupPanel() {
                       {copiedId === t.id ? "Copied" : "Copy"}
                     </button>
                   </div>
+                  {/* Scan-to-open: point a phone's camera here to launch the
+                      scanner on that phone — no USB scanner or login needed. */}
+                  {origin && (
+                    <div className="mt-3 flex items-center gap-3 bg-white rounded-lg p-2.5">
+                      <QRCodeSVG value={`${origin}/scan/${t.token}`} size={72} level="M" />
+                      <p className="text-gray-600 text-[11px] leading-snug">
+                        <span className="font-semibold text-gray-800">Use a phone as the scanner:</span>{" "}
+                        point its camera at this code to open the scanner on that phone.
+                      </p>
+                    </div>
+                  )}
                   <p className="text-gray-600 text-[11px] mt-2">
                     {t.last_used_at
                       ? `Last scan ${new Date(t.last_used_at).toLocaleString()}`
