@@ -29,8 +29,11 @@ export async function resolveDeviceToken(
 
   if (!device || device.revoked_at) return null;
 
-  // Touch last_used_at without blocking the scan.
-  void db
+  // Touch last_used_at. We must await this: on Vercel's serverless runtime the
+  // function can freeze the moment the response is sent, so a fire-and-forget
+  // ("void") write often never runs and the dashboard's "last used" stays blank.
+  // The extra round-trip is negligible for a kiosk page load.
+  await db
     .from("device_tokens")
     .update({ last_used_at: new Date().toISOString() })
     .eq("id", device.id);
