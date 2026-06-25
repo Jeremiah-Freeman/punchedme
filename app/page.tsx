@@ -39,7 +39,7 @@ function StepCircle({ s }: { s: StepData }) {
           b === "" ? (
             <div key={i} style={{ height: fs(10, 1.2, k) }} />
           ) : b === "+" ? (
-            <p key={i} style={{ fontSize: "max(48px, 6vw)", fontWeight: 200, lineHeight: 1 }} className="text-gray-900">
+            <p key={i} style={{ fontSize: "max(36px, 4.5vw)", fontWeight: 200, lineHeight: 1 }} className="text-gray-900">
               +
             </p>
           ) : b.startsWith("SUBTITLE:") ? (
@@ -87,26 +87,20 @@ function DotDivider() {
 const row1: StepData[] = [
   {
     step: "Step 1",
-    scale: 1.75,
+    scale: 1.3125,
     bullets: ["", "Add your business", "+", "Add Reward", ""],
     closing: "That's it",
   },
   {
     step: "Step 2",
-    scale: 1.75,
-    bullets: ["", "Choose your free QR display", "SUBTITLE:(We got you)", "+", ""],
+    scale: 1.3125,
+    bullets: ["", "Choose your free QR display", "SUBTITLE:(It's on us)", "+", "temporary QR stickers: already on the way", ""],
     closing: "You're done",
   },
   {
     step: "Step 3",
-    scale: 1.5,
-    bullets: [
-      "",
-      "TITLE:There's no step three",
-      "You're good to go",
-      "Your temporary QR codes are on the way",
-      "",
-    ],
+    scale: 1.125,
+    bullets: ["", "TITLE:There's no step three", "You're good to go", ""],
     closing: null,
   },
 ];
