@@ -139,7 +139,7 @@ export default function LandingPage() {
       </div>
 
       {/* Hero */}
-      <section className="text-center px-6 pt-16 pb-10">
+      <section className="text-center px-6 pt-16 pb-20">
         <h1
           className="font-extrabold leading-tight tracking-tight mb-5"
           style={{ fontSize: "clamp(16px, 4.5vw, 52px)", whiteSpace: "nowrap" }}
@@ -151,24 +151,24 @@ export default function LandingPage() {
 
         <div className="flex flex-col items-center" style={{ gap: "6px" }}>
           <span className="text-gray-400" style={{ fontSize: "max(18px, 2.8vw)" }}>•</span>
-          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(14px, 3vw, 30px)", whiteSpace: "nowrap" }}>
+          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
             {"Nobody wants to download another app"}
           </span>
-          <span className="font-semibold text-indigo-600" style={{ fontSize: "clamp(14px, 3vw, 30px)", whiteSpace: "nowrap" }}>
+          <span className="font-semibold text-indigo-600" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
             {"we made it so they don't have to"}
           </span>
           <span className="text-gray-400" style={{ fontSize: "max(18px, 2.8vw)" }}>•</span>
-          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(14px, 3vw, 30px)", whiteSpace: "nowrap" }}>
+          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
             {"No app, no login, no friction"}
           </span>
-          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(14px, 3vw, 30px)", whiteSpace: "nowrap" }}>
+          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
             {"it just works"}
           </span>
         </div>
       </section>
 
       {/* Steps — row 1 (business setup), led by the "YOU:" label */}
-      <section className="flex flex-col items-center gap-8 px-4 pt-4 pb-10">
+      <section className="flex flex-col items-center gap-8 px-4 pt-8 pb-10">
         <span
           className="font-bold tracking-widest text-indigo-500 uppercase"
           style={{ fontSize: "max(32px, 4.4vw)" }}
