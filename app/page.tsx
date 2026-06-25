@@ -73,12 +73,12 @@ function StepCircle({ s }: { s: StepData }) {
 // 3 dots + 2 gradient lines — the recurring divider motif.
 function DotDivider() {
   return (
-    <div className="flex items-center px-6 max-w-6xl mx-auto my-12">
-      <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
-      <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to right, transparent, #6366f1)" }} />
-      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#6366f1" }} />
-      <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to left, transparent, #6366f1)" }} />
-      <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
+    <div className="flex items-center justify-center w-32 mx-auto my-10">
+      <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
+      <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to right, transparent, #6366f1)" }} />
+      <span className="rounded-full shrink-0" style={{ width: "3px", height: "3px", background: "#6366f1" }} />
+      <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to left, transparent, #6366f1)" }} />
+      <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
     </div>
   );
 }
@@ -89,18 +89,18 @@ const row1: StepData[] = [
     step: "Step 1",
     scale: 1.3125,
     bullets: ["", "Add your business", "+", "Add Reward", ""],
-    closing: "That's it",
+    closing: null,
   },
   {
     step: "Step 2",
     scale: 1.3125,
-    bullets: ["", "Choose your free QR display", "SUBTITLE:(It's on us)", "+", "temporary QR stickers: already on the way", ""],
-    closing: "You're done",
+    bullets: ["", "Choose your free QR display", "SUBTITLE:(It's on us)", "+", "Temporary QR stickers: already on the way", ""],
+    closing: null,
   },
   {
     step: "Step 3",
     scale: 1.125,
-    bullets: ["", "TITLE:There's no step three", "You're good to go", ""],
+    bullets: ["", "", "TITLE:There's no step three", "You're good to go", ""],
     closing: null,
   },
 ];
@@ -132,40 +132,45 @@ export default function LandingPage() {
         <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
       </div>
 
-      {/* Hero */}
-      <section className="text-center px-6 pt-16 pb-20">
-        <h1
-          className="font-extrabold leading-tight tracking-tight mb-5"
-          style={{ fontSize: "clamp(16px, 4.5vw, 52px)", whiteSpace: "nowrap" }}
-        >
-          Nobody carries a punch card.
-          <br />
-          <span className="text-indigo-600">Everybody carries their phone.</span>
-        </h1>
+      {/* Hero — block centered on the page, but its lines share one left edge */}
+      <section className="px-6 pt-16 pb-8 flex justify-center">
+        <div className="text-left">
+          <h1
+            className="font-extrabold leading-tight tracking-tight mb-5"
+            style={{ fontSize: "clamp(16px, 4.5vw, 52px)", whiteSpace: "nowrap" }}
+          >
+            Nobody carries a punch card.
+            <br />
+            <span className="text-indigo-600">Everybody carries their phone.</span>
+          </h1>
 
-        <div className="flex flex-col items-center" style={{ gap: "6px" }}>
-          <span className="text-gray-400" style={{ fontSize: "max(18px, 2.8vw)" }}>•</span>
-          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
-            {"Nobody wants to download another app"}
-          </span>
-          <span className="font-semibold text-indigo-600" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
-            {"we made it so they don't have to"}
-          </span>
-          <span className="text-gray-400" style={{ fontSize: "max(18px, 2.8vw)" }}>•</span>
-          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
-            {"No app, no login, no friction"}
-          </span>
-          <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
-            {"it just works"}
-          </span>
+          <div className="flex flex-col items-start" style={{ gap: "6px" }}>
+            <span className="self-center text-gray-400" style={{ fontSize: "max(18px, 2.8vw)" }}>•</span>
+            <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
+              {"Nobody wants to download another app"}
+            </span>
+            <span className="font-semibold text-indigo-600" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
+              {"We made it so they don't have to"}
+            </span>
+            <span className="self-center text-gray-400" style={{ fontSize: "max(18px, 2.8vw)" }}>•</span>
+            <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
+              {"No app, No login, No friction"}
+            </span>
+            <span className="font-semibold text-indigo-600" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
+              {"It just works"}
+            </span>
+          </div>
         </div>
       </section>
 
-      {/* Steps — row 1 (business setup), led by the "YOU:" label */}
-      <section className="flex flex-col items-center gap-8 px-4 pt-8 pb-10">
+      {/* Small divider between the copy and the YOU: steps */}
+      <DotDivider />
+
+      {/* Steps — row 1 (business setup), led by the "YOU:" label (2x) */}
+      <section className="flex flex-col items-center gap-8 px-4 pt-6 pb-10">
         <span
           className="font-bold tracking-widest text-indigo-500 uppercase"
-          style={{ fontSize: "max(32px, 4.4vw)" }}
+          style={{ fontSize: "max(64px, 8.8vw)" }}
         >
           you:
         </span>
