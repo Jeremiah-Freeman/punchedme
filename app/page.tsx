@@ -47,7 +47,7 @@ export default function LandingPage() {
             alignTop: true,
             noSeparator: true,
             noBullets: true,
-            bullets: ["Add your business", "•", "Add Reward", "", ""] as string[],
+            bullets: ["", "", "Add your business", "+", "Add Reward", "", ""] as string[],
             closing: "That's it",
           },
           {
@@ -55,7 +55,7 @@ export default function LandingPage() {
             alignTop: true,
             noSeparator: true,
             noBullets: true,
-            bullets: ["Choose your free QR display", "SUBTITLE:(We got you)", "•", ""] as string[],
+            bullets: ["", "", "Choose your free QR display", "SUBTITLE:(We got you)", "+", ""] as string[],
             closing: "You're done",
           },
           {
@@ -63,7 +63,7 @@ export default function LandingPage() {
             alignTop: true,
             noSeparator: true,
             noBullets: true,
-            bullets: ["TITLE:There's no step three", "You're good to go", "•", "Your customers do the work for you", "", "Your QR code is on the way"] as string[],
+            bullets: ["", "", "TITLE:There's no step three", "You're good to go", "Your customers do the work for you", "", "Your QR code is on the way", ""] as string[],
             closing: null as string | null,
           },
         ].map((s) => (
@@ -86,6 +86,8 @@ export default function LandingPage() {
                     <div key={i} style={{ height: "max(10px, 1.2vw)" }} />
                   ) : b === "•" ? (
                     <p key={i} style={{ fontSize: "max(18px, 2.8vw)" }} className="text-gray-400">•</p>
+                  ) : b === "+" ? (
+                    <p key={i} style={{ fontSize: "max(26px, 3.4vw)", fontWeight: 200, lineHeight: 1 }} className="text-gray-300">+</p>
                   ) : b.startsWith("SUBTITLE:") ? (
                     <p key={i} style={{ fontSize: "max(16px, 2.4vw)", lineHeight: 1.5 }} className="text-gray-400">{b.replace("SUBTITLE:", "")}</p>
                   ) : b.startsWith("TITLE:") ? (
