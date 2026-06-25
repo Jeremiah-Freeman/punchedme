@@ -25,9 +25,9 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="text-center px-6 pt-16 pb-10">
         <h1 className="font-extrabold leading-tight tracking-tight mb-4"
-          style={{ fontSize: "clamp(17px, 4.5vw, 52px)", whiteSpace: "nowrap" }}>
-          Digital punch cards<br />
-          <span className="text-indigo-600">without the stupid...punch cards</span>
+          style={{ fontSize: "clamp(16px, 4.5vw, 52px)", whiteSpace: "nowrap" }}>
+          Nobody carries a punch card.<br />
+          <span className="text-indigo-600">Everybody carries their phone.</span>
         </h1>
         <div className="flex flex-col items-center" style={{ gap: "3px" }}>
           <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(18px, 3.5vw, 42px)", whiteSpace: "nowrap" }}>
@@ -125,8 +125,10 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 px-6 text-center text-sm text-gray-400">
-        © <span className="num">{new Date().getFullYear()}</span> Punched.me. Built for dope businesses.
+      <footer className="border-t py-8 px-6 text-center text-gray-400">
+        <span className="whitespace-nowrap" style={{ fontSize: "clamp(10px, 3vw, 14px)" }}>
+          © <span className="num">{new Date().getFullYear()}</span> Punched.me. Built for dope businesses.
+        </span>
       </footer>
     </div>
   );
