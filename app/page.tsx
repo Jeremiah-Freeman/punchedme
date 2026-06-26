@@ -107,9 +107,28 @@ const row1: StepData[] = [
 
 // Row 2 — how it actually works (copy TBD; empty placeholders for now).
 const row2: StepData[] = [
-  { step: "Step 1", scale: 1.5, bullets: [] },
-  { step: "Step 2", scale: 1.5, bullets: [] },
-  { step: "Step 3", scale: 1.5, bullets: [] },
+  {
+    step: "Step 1",
+    scale: 1.3125,
+    bullets: ["User scans QR code, enters name and phone number", "SUBTITLE:(No app)"],
+    closing: null,
+  },
+  {
+    step: "Step 2",
+    scale: 1.3125,
+    bullets: ["Next time a purchase is made, they simply tap or scan", "SUBTITLE:(No login)"],
+    closing: null,
+  },
+  {
+    step: "Step 3",
+    scale: 1.125,
+    bullets: [
+      "TITLE:There's no step three",
+      "When the customer reaches the preset amount, they show you at checkout",
+      "You're good to go",
+    ],
+    closing: null,
+  },
 ];
 
 export default function LandingPage() {
@@ -180,8 +199,14 @@ export default function LandingPage() {
       {/* Divider before the "how it works" row */}
       <DotDivider />
 
-      {/* Steps — row 2 (how it works; placeholders to fill in) */}
+      {/* Steps — row 2 (how it works for the customer), led by "THEM:" */}
       <section className="flex flex-col items-center gap-8 px-4 py-10">
+        <span
+          className="font-bold tracking-widest text-indigo-500 uppercase"
+          style={{ fontSize: "max(64px, 8.8vw)" }}
+        >
+          them:
+        </span>
         {row2.map((s, i) => (
           <StepCircle key={`r2-${i}`} s={s} />
         ))}
