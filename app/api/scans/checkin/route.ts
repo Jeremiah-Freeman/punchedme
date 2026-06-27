@@ -3,7 +3,27 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getBusinessCoords } from "@/lib/locations";
 import type { ScanResult } from "@/lib/types";
 
-const GEO_RADIUS_M = 200;
+const GEO_RADIUS_M = 100;
+
+// Light "open hours" guard for customer self-scan: block punches in the dead of
+// night (local time). Blocks 1:00–4:59am in the business's timezone. Generous on
+// purpose — virtually no legit punches happen then, and we never block daytime.
+const OVERNIGHT_BLOCK_START = 1;
+const OVERNIGHT_BLOCK_END = 5;
+
+function localHour(timeZone: string): number | null {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hour: "numeric",
+      hour12: false,
+    }).formatToParts(new Date());
+    const h = parts.find((p) => p.type === "hour")?.value;
+    return h != null ? Number(h) % 24 : null;
+  } catch {
+    return null;
+  }
+}
 
 function haversineDistance(
   lat1: number,
@@ -51,12 +71,25 @@ export async function POST(request: NextRequest) {
     // Look up business by slug
     const { data: business } = await db
       .from("businesses")
-      .select("id, name, latitude, longitude")
+      .select("id, name, latitude, longitude, timezone")
       .eq("slug", businessSlug)
       .single();
 
     if (!business) {
       return NextResponse.json({ error: "Business not found" }, { status: 404 });
+    }
+
+    // Open-hours guard — no overnight self-scan punches.
+    const hour = localHour(business.timezone ?? "America/Los_Angeles");
+    if (hour !== null && hour >= OVERNIGHT_BLOCK_START && hour < OVERNIGHT_BLOCK_END) {
+      return NextResponse.json(
+        {
+          status: "closed",
+          businessName: business.name,
+          message: `${business.name} isn't open right now — come by during the day to earn a punch.`,
+        },
+        { status: 403 }
+      );
     }
 
     // GPS check — customer must be within radius of ANY store location

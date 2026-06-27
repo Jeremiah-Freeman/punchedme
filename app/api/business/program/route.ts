@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         reward_name: rewardName.trim(),
         punches_required: punchesRequired,
-        punch_cooldown_minutes: punchCooldownMinutes ?? 240,
+        punch_cooldown_minutes: punchCooldownMinutes ?? 1440,
         is_active: true,
       })
       .select()

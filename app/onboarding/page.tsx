@@ -289,7 +289,7 @@ export default function OnboardingPage() {
           name: `${businessName} Rewards`,
           rewardName: rewardDescription,
           punchesRequired,
-          punchCooldownMinutes: 120,
+          punchCooldownMinutes: 1440,
           brandColor,
         }),
       });

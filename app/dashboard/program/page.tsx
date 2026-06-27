@@ -24,7 +24,7 @@ export default function ProgramPage() {
   const [name, setName] = useState("");
   const [rewardName, setRewardName] = useState("");
   const [punchesRequired, setPunchesRequired] = useState(10);
-  const [cooldownMinutes, setCooldownMinutes] = useState(120);
+  const [cooldownMinutes, setCooldownMinutes] = useState(1440);
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function ProgramPage() {
           setName(p.name);
           setRewardName(p.reward_name);
           setPunchesRequired(p.punches_required);
-          setCooldownMinutes(p.punch_cooldown_minutes ?? 120);
+          setCooldownMinutes(p.punch_cooldown_minutes ?? 1440);
           setIsActive(p.is_active);
         }
       }
@@ -168,10 +168,10 @@ export default function ProgramPage() {
             <option value={0}>No limit — punch every visit</option>
             <option value={30}>30 minutes</option>
             <option value={60}>1 hour</option>
-            <option value={120}>2 hours (recommended)</option>
+            <option value={120}>2 hours</option>
             <option value={240}>4 hours</option>
             <option value={480}>8 hours</option>
-            <option value={1440}>Once per day</option>
+            <option value={1440}>Once per day (recommended)</option>
           </select>
           <p className="text-xs text-gray-400 mt-1">
             Prevents the same customer from scanning multiple times in one visit.

@@ -10,6 +10,7 @@ type PageState =
   | "checking_in"    // returning customer — calling checkin API
   | "punch_result"   // returning customer — showing punch result
   | "too_far"        // GPS rejected
+  | "closed"         // overnight — punches paused
   | "signup"         // new customer — show form
   | "signup_success"; // just signed up
 
@@ -101,6 +102,10 @@ export default function JoinPage() {
         const data = await res.json();
         if (data.status === "too_far") {
           setPageState("too_far");
+          return;
+        }
+        if (data.status === "closed") {
+          setPageState("closed");
           return;
         }
         setPunchResult(data as ScanResult);
@@ -231,6 +236,21 @@ export default function JoinPage() {
           <p className="text-gray-500">
             This QR only works when you&apos;re physically at{" "}
             {businessName || "the store"}. Come in and scan again!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageState === "closed") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <Clock className="w-14 h-14 text-indigo-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-3">Punches are paused for the night</h1>
+          <p className="text-gray-500">
+            {businessName || "This shop"} isn&apos;t open right now. Come by during
+            the day and scan again!
           </p>
         </div>
       </div>
