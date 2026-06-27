@@ -55,14 +55,14 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
   const walletNotConfigured = wallet === "apple-not-configured" || wallet === "google-not-configured";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-6">
       <div className="w-full max-w-sm">
         {/* Card */}
         <div
-          className="rounded-3xl text-white p-6 shadow-xl mb-6"
+          className="rounded-3xl text-white p-5 shadow-xl mb-4"
           style={{ background: `linear-gradient(135deg, ${brandColor}, ${darken(brandColor, 20)})` }}
         >
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               {logoUrl ? (
                 <img
@@ -87,10 +87,10 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
           </div>
 
           {/* Punch progress */}
-          <div className="mb-6">
+          <div className="mb-4">
             <div className="flex items-end justify-between mb-2">
-              <span className="text-5xl font-bold">{currentPunches}</span>
-              <span className="text-xl opacity-70 mb-1">/ {punchesRequired}</span>
+              <span className="text-4xl font-bold">{currentPunches}</span>
+              <span className="text-lg opacity-70 mb-0.5">/ {punchesRequired}</span>
             </div>
             <div className="w-full bg-white/20 rounded-full h-2">
               <div
@@ -114,17 +114,16 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
         </div>
 
         {/* QR code */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6 text-center">
-          <p className="text-sm text-gray-500 mb-4">Show this QR code at the counter</p>
+        <div className="bg-white rounded-2xl p-4 shadow-sm mb-4 text-center">
+          <p className="text-sm text-gray-500 mb-3">Show this QR code at the counter</p>
           <div className="flex justify-center">
-            <QRCodeSVG value={token} size={200} level="M" />
+            <QRCodeSVG value={token} size={160} level="M" />
           </div>
-          <p className="text-xs text-gray-400 mt-3 font-mono truncate">{token.slice(0, 16)}…</p>
         </div>
 
         {/* Wallet buttons */}
         {walletNotConfigured && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-3">
             <p className="text-sm text-amber-800">
               Wallet integration isn&apos;t set up yet. Use the QR code above — it works the same way!
             </p>
@@ -134,28 +133,16 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
         <div className="space-y-2">
           <a
             href={appleWalletUrl}
-            className="flex items-center justify-center gap-2 w-full bg-black text-white py-3 rounded-xl text-sm font-semibold hover:bg-gray-900 transition-colors"
+            className="flex items-center justify-center gap-2 w-full bg-black text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-900 transition-colors"
           >
             Add to Apple Wallet
           </a>
           <a
             href={googleWalletUrl}
-            className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+            className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
           >
             Add to Google Wallet
           </a>
-        </div>
-
-        {/* Stats */}
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <p className="text-2xl font-bold text-gray-900">{account?.lifetime_punches ?? 0}</p>
-            <p className="text-xs text-gray-500 mt-1">Total punches</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <p className="text-2xl font-bold text-gray-900">{account?.rewards_redeemed ?? 0}</p>
-            <p className="text-xs text-gray-500 mt-1">Rewards earned</p>
-          </div>
         </div>
       </div>
     </div>
