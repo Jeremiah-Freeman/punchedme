@@ -53,8 +53,31 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(10);
 
+  // ── Plan milestone state (member_count is derived from customers) ──
+  const memberCount = totalCustomers ?? 0;
+  const FREE_CAP = 50;
+  const STARTER_CAP = 200;
+  const planType: string = business.plan_type ?? "free";
+  const paid = business.payment_status === "active" || planType !== "free";
+  const displayLabels: Record<string, string> = {
+    sticker: "sticker pack",
+    acrylic: "clear acrylic display",
+    bamboo: "bamboo display",
+    black: "minimal black display",
+    dynamic: "dynamic display",
+  };
+  const displayLabel = displayLabels[business.selected_display_type as string] ?? "counter display";
+  let milestone: "free_active" | "free_near_limit" | "free_limit_reached_no_payment" | "starter_active" | "growth_required";
+  if (paid && planType === "starter" && memberCount > STARTER_CAP) milestone = "growth_required";
+  else if (paid) milestone = "starter_active";
+  else if (memberCount >= FREE_CAP) milestone = "free_limit_reached_no_payment";
+  else if (memberCount >= 40) milestone = "free_near_limit";
+  else milestone = "free_active";
+  const remaining = Math.max(0, FREE_CAP - memberCount);
+  const pct = Math.min(100, Math.round((memberCount / FREE_CAP) * 100));
+
   const stats = [
-    { label: "Total customers", value: totalCustomers ?? 0, icon: Users, color: "text-blue-600 bg-blue-50" },
+    { label: "Reward members", value: totalCustomers ?? 0, icon: Users, color: "text-blue-600 bg-blue-50" },
     { label: "Punches today", value: punchesToday ?? 0, icon: Zap, color: "text-indigo-600 bg-indigo-50" },
     { label: "Rewards redeemed", value: rewardsRedeemed ?? 0, icon: Star, color: "text-amber-600 bg-amber-50" },
   ];
@@ -87,6 +110,17 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Plan milestone */}
+      <MilestoneCard
+        milestone={milestone}
+        memberCount={memberCount}
+        remaining={remaining}
+        pct={pct}
+        freeCap={FREE_CAP}
+        displayLabel={displayLabel}
+        displayStatus={(business.display_status as string) ?? "selected"}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
@@ -153,6 +187,104 @@ export default async function DashboardPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ProgressBar({ pct }: { pct: number }) {
+  return (
+    <div className="w-full bg-white/50 rounded-full h-2.5 overflow-hidden">
+      <div className="bg-indigo-600 h-2.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+function MilestoneCard({
+  milestone,
+  memberCount,
+  remaining,
+  pct,
+  freeCap,
+  displayLabel,
+  displayStatus,
+}: {
+  milestone: string;
+  memberCount: number;
+  remaining: number;
+  pct: number;
+  freeCap: number;
+  displayLabel: string;
+  displayStatus: string;
+}) {
+  // free_active — building toward the unlock
+  if (milestone === "free_active") {
+    return (
+      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 mb-8">
+        <p className="font-semibold text-gray-900">You&apos;re live. 🎉</p>
+        <p className="text-sm text-gray-600 mt-0.5 mb-4">Share your QR at checkout and start building your reward members.</p>
+        <ProgressBar pct={pct} />
+        <p className="text-xs text-gray-500 mt-2">
+          <span className="font-semibold text-indigo-700">{memberCount} / {freeCap}</span> reward members until your {displayLabel} unlocks.
+        </p>
+      </div>
+    );
+  }
+
+  // free_near_limit — nudge to add payment so the display ships automatically
+  if (milestone === "free_near_limit") {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8">
+        <p className="font-semibold text-amber-900">You&apos;re almost there</p>
+        <p className="text-sm text-amber-800 mt-0.5 mb-4">Only {remaining} more reward {remaining === 1 ? "member" : "members"} until your {displayLabel} unlocks.</p>
+        <ProgressBar pct={pct} />
+        <p className="text-xs text-amber-700 mt-2 mb-4">{memberCount} / {freeCap} reward members</p>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/pricing" className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors">
+            Add payment so it ships automatically
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // free_limit_reached_no_payment — milestone hit, activate to keep growing
+  if (milestone === "free_limit_reached_no_payment") {
+    return (
+      <div className="bg-indigo-600 text-white rounded-2xl p-6 mb-8">
+        <p className="text-xl font-bold">You did it — {memberCount} reward members 🎉</p>
+        <p className="text-sm text-indigo-100 mt-1 mb-4">Activate Starter to keep growing past {freeCap} members and ship your {displayLabel}. Your existing members keep earning either way.</p>
+        <Link href="/pricing" className="inline-block bg-white text-indigo-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-50 transition-colors">
+          Activate Starter
+        </Link>
+      </div>
+    );
+  }
+
+  // starter_active — display being prepared
+  if (milestone === "starter_active") {
+    const statusLabel: Record<string, string> = {
+      selected: "queued",
+      pending_payment: "awaiting payment",
+      preparing: "being prepared",
+      shipped: "on its way 📦",
+      delivered: "delivered ✅",
+    };
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-2xl p-5 mb-8">
+        <p className="font-semibold text-green-900">Starter is active.</p>
+        <p className="text-sm text-green-800 mt-0.5">Your {displayLabel} is {statusLabel[displayStatus] ?? "being prepared"}.</p>
+      </div>
+    );
+  }
+
+  // growth_required — outgrew Starter
+  return (
+    <div className="bg-indigo-600 text-white rounded-2xl p-6 mb-8">
+      <p className="text-lg font-bold">You&apos;ve outgrown Starter</p>
+      <p className="text-sm text-indigo-100 mt-1 mb-4">Upgrade to Growth to keep accepting new reward members.</p>
+      <Link href="/pricing" className="inline-block bg-white text-indigo-700 px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-50 transition-colors">
+        Upgrade to Growth
+      </Link>
     </div>
   );
 }
