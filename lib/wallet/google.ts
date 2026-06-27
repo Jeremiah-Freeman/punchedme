@@ -144,6 +144,24 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
     }));
   }
 
+  // Define the loyalty class inline so the first save auto-creates it — no
+  // separate class-creation API call needed. Google requires id/issuerName/
+  // reviewStatus/programName/programLogo on a loyalty class.
+  const programLogoUri = logoUrl ?? "https://www.punched.me/punched-only.png";
+  const loyaltyClass = {
+    id: classId,
+    issuerName: businessName,
+    programName: `${businessName} Rewards`,
+    reviewStatus: "UNDER_REVIEW",
+    hexBackgroundColor: brandColor,
+    programLogo: {
+      sourceUri: { uri: programLogoUri },
+      contentDescription: {
+        defaultValue: { language: "en-US", value: `${businessName} logo` },
+      },
+    },
+  };
+
   // Build JWT payload
   const payload = {
     iss: serviceAccountEmail,
@@ -151,6 +169,7 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
     origins: [appUrl],
     typ: "savetowallet",
     payload: {
+      loyaltyClasses: [loyaltyClass],
       loyaltyObjects: [loyaltyObject],
     },
   };
