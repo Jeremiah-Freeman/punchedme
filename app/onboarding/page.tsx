@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Gift, MapPin, Palette, Sparkles, Send, Smartphone, Plus, X } from "lucide-react";
+import { Building2, Gift, MapPin, Palette, Sparkles, Send, Smartphone, Plus, X, Check } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { PassPreviews } from "@/components/PassPreviews";
 
-type OnboardingStep = "how" | "business" | "program";
+type OnboardingStep = "how" | "business" | "program" | "display" | "plan";
 
 // ── How it works explainer ────────────────────────────────────────────────────
 
@@ -133,6 +133,9 @@ export default function OnboardingPage() {
   const [rewardDescription, setRewardDescription] = useState("");
   const [punchesRequired, setPunchesRequired] = useState(10);
 
+  // Display + plan choice
+  const [selectedDisplay, setSelectedDisplay] = useState("sticker");
+
   // Logo upload (optional)
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -203,7 +206,7 @@ export default function OnboardingPage() {
   // On first load, restore the step from ?step= so refresh doesn't restart the wizard
   useEffect(() => {
     const s = new URLSearchParams(window.location.search).get("step");
-    if (s === "business" || s === "program") setStep(s);
+    if (s === "business" || s === "program" || s === "display" || s === "plan") setStep(s as OnboardingStep);
   }, []);
 
   // Keep the URL in sync as they move through steps
@@ -298,11 +301,28 @@ export default function OnboardingPage() {
         setError(data.error ?? "Failed to create program");
         return;
       }
-      // Go to QR code welcome page instead of dashboard
-      router.push("/onboarding/success");
+      // Program created — now pick a counter display + plan.
+      setStep("display");
     } catch {
       setError("Network error. Try again.");
     } finally {
+      setLoading(false);
+    }
+  }
+
+  // Finalize: save display choice + plan, then go to the QR welcome page.
+  async function finishOnboarding(plan: "free" | "ship_now") {
+    setError("");
+    setLoading(true);
+    try {
+      await fetch("/api/business/onboarding-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, displayType: selectedDisplay, plan }),
+      });
+      router.push("/onboarding/success");
+    } catch {
+      setError("Network error. Try again.");
       setLoading(false);
     }
   }
@@ -345,7 +365,7 @@ export default function OnboardingPage() {
         {step === "how" && <HowItWorks onStart={() => setStep("business")} />}
 
         {/* Business + Program steps */}
-        {step !== "how" && (
+        {(step === "business" || step === "program") && (
           <>
             {/* Progress */}
             <div className="flex items-center justify-center gap-3 mb-8 px-1">
@@ -699,6 +719,131 @@ export default function OnboardingPage() {
 
             </div>
           </>
+        )}
+
+        {/* ── Step: Choose your counter setup ── */}
+        {step === "display" && (
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-300">
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">Pick your counter setup</h1>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                We&apos;ll mail your QR stickers now. Your counter display unlocks when
+                50 reward members join — or you can ship it today.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                { id: "sticker", name: "Sticker Pack", badge: "Included free", badgeTone: "ok", desc: "Your QR code, ready to stick near checkout.", swatch: "#e5e7eb" },
+                { id: "acrylic", name: "Clear Acrylic Counter Display", badge: "Unlocks at 50", badgeTone: "soft", desc: "Clean, simple, customer-facing QR display.", swatch: "#dbeafe" },
+                { id: "bamboo", name: "Bamboo Counter Display", badge: "Unlocks at 50", badgeTone: "soft", desc: "Warmer, natural look for coffee shops, salons & boutiques.", swatch: "#fde9c8" },
+                { id: "black", name: "Minimal Black Counter Display", badge: "Unlocks at 50", badgeTone: "soft", desc: "Modern, sturdy, and clean.", swatch: "#1f2937" },
+              ].map((d) => {
+                const active = selectedDisplay === d.id;
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setSelectedDisplay(d.id)}
+                    className={`w-full text-left rounded-2xl border p-4 flex items-center gap-4 transition-all ${
+                      active ? "border-indigo-500 bg-indigo-50/50 ring-2 ring-indigo-200" : "border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    <span className="w-12 h-12 rounded-xl shrink-0 border border-black/5" style={{ background: d.swatch }} />
+                    <span className="flex-1 min-w-0">
+                      <span className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-gray-900 text-sm">{d.name}</span>
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                          d.badgeTone === "ok" ? "bg-green-100 text-green-700" : "bg-indigo-100 text-indigo-700"
+                        }`}>{d.badge}</span>
+                      </span>
+                      <span className="block text-xs text-gray-500 mt-0.5">{d.desc}</span>
+                    </span>
+                    {active && <Check className="w-5 h-5 text-indigo-600 shrink-0" />}
+                  </button>
+                );
+              })}
+
+              {/* Premium / coming soon — not selectable yet */}
+              <div className="w-full text-left rounded-2xl border border-dashed border-gray-300 p-4 flex items-center gap-4 opacity-70">
+                <span className="w-12 h-12 rounded-xl shrink-0 bg-gradient-to-br from-indigo-400 to-violet-500" />
+                <span className="flex-1 min-w-0">
+                  <span className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-gray-900 text-sm">Dynamic QR Display</span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">Premium · soon</span>
+                  </span>
+                  <span className="block text-xs text-gray-500 mt-0.5">Rotating QR with animated branding and stronger fraud protection.</span>
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setStep("plan")}
+              className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              Continue
+            </button>
+          </div>
+        )}
+
+        {/* ── Step: Start free, or ship now ── */}
+        {step === "plan" && (
+          <div>
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">Start free, or get the full counter setup now</h1>
+              <p className="text-sm text-gray-500">No card required to start.</p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Start Free */}
+              <div className="rounded-3xl border border-gray-300 p-6 flex flex-col">
+                <h2 className="text-lg font-bold text-gray-900">Start Free</h2>
+                <p className="text-3xl font-extrabold text-gray-900 mt-1 mb-4">$0 <span className="text-sm font-medium text-gray-400">today</span></p>
+                <ul className="space-y-2 text-sm text-gray-700 mb-5 flex-1">
+                  {["QR code ready instantly", "Free QR sticker pack mailed", "Use Punched free until 50 reward members", "Counter display unlocks after your first paid month", "No card required"].map((f) => (
+                    <li key={f} className="flex items-start gap-2"><Check className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />{f}</li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => finishOnboarding("free")}
+                  className="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  {loading ? "Setting up…" : "Start free"}
+                </button>
+                <p className="text-xs text-gray-400 text-center mt-2">Perfect if you want to try Punched before adding payment.</p>
+              </div>
+
+              {/* Ship My Display Now */}
+              <div className="rounded-3xl border-2 border-indigo-500 p-6 flex flex-col relative">
+                <h2 className="text-lg font-bold text-gray-900">Ship My Display Now</h2>
+                <p className="text-3xl font-extrabold text-gray-900 mt-1 mb-4">$19.99 <span className="text-sm font-medium text-gray-400">today</span></p>
+                <ul className="space-y-2 text-sm text-gray-700 mb-5 flex-1">
+                  {["QR code ready instantly", "Your selected counter display ships now", "Includes first month of Starter", "Up to 200 reward members", "No waiting to unlock the display"].map((f) => (
+                    <li key={f} className="flex items-start gap-2"><Check className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />{f}</li>
+                  ))}
+                </ul>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                  <p className="text-[11px] text-amber-800 leading-snug">Instant checkout is launching shortly — tap to reserve your display now; we won&apos;t charge your card yet.</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => finishOnboarding("ship_now")}
+                  className="w-full bg-gray-900 text-white py-3 rounded-xl text-sm font-semibold hover:bg-black disabled:opacity-50 transition-colors"
+                >
+                  {loading ? "Reserving…" : "Reserve my display"}
+                </button>
+                <p className="text-xs text-gray-400 text-center mt-2">For businesses ready to put Punched on the counter right away.</p>
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl border border-red-100 mt-4">{error}</div>
+            )}
+          </div>
         )}
       </div>
     </div>
