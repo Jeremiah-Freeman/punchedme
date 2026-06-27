@@ -107,7 +107,23 @@ export async function POST(request: NextRequest) {
       role: "owner",
     });
 
-    return NextResponse.json({ business });
+    // If they arrived via a /c/<code> sticker, claim that code to this new shop.
+    const pendingCode = request.cookies.get("pending_sticker_code")?.value;
+    let claimedCode = false;
+    if (pendingCode) {
+      const { error: claimErr } = await db
+        .from("sticker_codes")
+        .update({ business_id: business.id, claimed_at: new Date().toISOString() })
+        .eq("code", pendingCode)
+        .is("business_id", null);
+      if (!claimErr) claimedCode = true;
+    }
+
+    const response = NextResponse.json({ business });
+    if (claimedCode) {
+      response.cookies.set("pending_sticker_code", "", { maxAge: 0, path: "/" });
+    }
+    return response;
   } catch (err) {
     console.error("Business create error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

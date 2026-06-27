@@ -142,6 +142,36 @@ export default function JoinPage() {
     });
   }, [slug, performCheckin]);
 
+  // Punch confirmation — a quick two-tone "ding" + a buzz the moment a punch
+  // lands. Best-effort: iOS Safari may keep the AudioContext suspended until a
+  // tap, so the on-screen confirmation is always the primary feedback.
+  useEffect(() => {
+    if (pageState !== "punch_result" || !punchResult) return;
+    if (punchResult.status !== "success" && punchResult.status !== "reward_available") return;
+    try {
+      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new AC();
+      const now = ctx.currentTime;
+      [880, 1320].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const t = now + i * 0.12;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      });
+      navigator.vibrate?.(60);
+    } catch {
+      // No audio support — the visual confirmation carries it.
+    }
+  }, [pageState, punchResult]);
+
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");

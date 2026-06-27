@@ -83,6 +83,23 @@ function DotDivider() {
   );
 }
 
+// Section header ("YOU" / "THEM") with a round colon — two stacked dots
+// instead of the typographic ":".
+function StepHeader({ word }: { word: string }) {
+  return (
+    <span
+      className="font-bold tracking-widest text-indigo-500 uppercase"
+      style={{ fontSize: "max(64px, 8.8vw)", display: "inline-flex", alignItems: "center", gap: "0.22em", lineHeight: 1 }}
+    >
+      {word}
+      <span style={{ display: "inline-flex", flexDirection: "column", gap: "0.16em" }} aria-hidden="true">
+        <span style={{ width: "0.17em", height: "0.17em", borderRadius: "9999px", background: "currentColor" }} />
+        <span style={{ width: "0.17em", height: "0.17em", borderRadius: "9999px", background: "currentColor" }} />
+      </span>
+    </span>
+  );
+}
+
 // Row 1 — what YOU (the business) do to get set up.
 const row1: StepData[] = [
   {
@@ -185,12 +202,7 @@ export default function LandingPage() {
 
       {/* Steps — row 1 (business setup), led by the "YOU:" label (2x) */}
       <section className="flex flex-col items-center gap-8 px-4 pt-6 pb-10">
-        <span
-          className="font-bold tracking-widest text-indigo-500 uppercase"
-          style={{ fontSize: "max(64px, 8.8vw)" }}
-        >
-          you:
-        </span>
+        <StepHeader word="you" />
         {row1.map((s) => (
           <StepCircle key={s.step} s={s} />
         ))}
@@ -201,12 +213,7 @@ export default function LandingPage() {
 
       {/* Steps — row 2 (how it works for the customer), led by "THEM:" */}
       <section className="flex flex-col items-center gap-8 px-4 py-10">
-        <span
-          className="font-bold tracking-widest text-indigo-500 uppercase"
-          style={{ fontSize: "max(64px, 8.8vw)" }}
-        >
-          them:
-        </span>
+        <StepHeader word="them" />
         {row2.map((s, i) => (
           <StepCircle key={`r2-${i}`} s={s} />
         ))}
