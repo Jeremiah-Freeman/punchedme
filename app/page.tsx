@@ -133,7 +133,7 @@ const row2: StepData[] = [
   {
     step: "Step 2",
     scale: 1.3125,
-    bullets: ["Next time a purchase is made, they simply tap or scan", "SUBTITLE:(No login)"],
+    bullets: ["Next visit, they scan your QR again", "SUBTITLE:(No login)"],
     closing: null,
   },
   {
