@@ -59,8 +59,10 @@ export default async function DashboardPage() {
   const STARTER_CAP = 200;
   const planType: string = business.plan_type ?? "free";
   const paid = business.payment_status === "active" || planType !== "free";
+  // Note: the milestone unlocks the *counter display*, not the sticker pack
+  // (stickers always ship free), so a sticker/default selection reads generic.
   const displayLabels: Record<string, string> = {
-    sticker: "sticker pack",
+    sticker: "counter display",
     acrylic: "clear acrylic display",
     bamboo: "bamboo display",
     black: "minimal black display",
