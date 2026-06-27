@@ -22,7 +22,7 @@ function StepCircle({ s }: { s: StepData }) {
   return (
     <div
       className="relative rounded-full border-2 border-indigo-400 flex flex-col items-center justify-center text-center w-full"
-      style={{ aspectRatio: "1", maxWidth: "min(92vw, 80vh)", containerType: "inline-size" }}
+      style={{ aspectRatio: "1", maxWidth: "min(92vw, 80vh)", containerType: "inline-size", scrollSnapAlign: "center" }}
     >
       {/* STEP label — pinned near the top (sizes/positions relative to the circle) */}
       <p
@@ -74,7 +74,7 @@ function StepCircle({ s }: { s: StepData }) {
 // 3 dots + 2 gradient lines — the recurring divider motif.
 function DotDivider() {
   return (
-    <div className="flex items-center justify-center w-32 mx-auto my-10">
+    <div className="flex items-center justify-center w-32 mx-auto my-5">
       <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
       <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to right, transparent, #6366f1)" }} />
       <span className="rounded-full shrink-0" style={{ width: "3px", height: "3px", background: "#6366f1" }} />
@@ -152,6 +152,8 @@ const row2: StepData[] = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
+      {/* Gentle section-snap on phones only — each circle catches the scroll */}
+      <style>{`@media (max-width: 767px){html{scroll-snap-type:y proximity}}`}</style>
       <RecoveryRedirect />
 
       {/* Nav */}
@@ -202,7 +204,7 @@ export default function LandingPage() {
       <DotDivider />
 
       {/* Steps — row 1 (business setup), led by the "YOU:" label (2x) */}
-      <section className="flex flex-col items-center gap-8 px-4 pt-6 pb-10">
+      <section className="flex flex-col items-center gap-4 px-4 pt-4 pb-5">
         <StepHeader word="you" />
         {row1.map((s) => (
           <StepCircle key={s.step} s={s} />
@@ -213,7 +215,7 @@ export default function LandingPage() {
       <DotDivider />
 
       {/* Steps — row 2 (how it works for the customer), led by "THEM:" */}
-      <section className="flex flex-col items-center gap-8 px-4 py-10">
+      <section className="flex flex-col items-center gap-4 px-4 py-5">
         <StepHeader word="them" />
         {row2.map((s, i) => (
           <StepCircle key={`r2-${i}`} s={s} />
@@ -230,7 +232,7 @@ export default function LandingPage() {
       </div>
 
       {/* Signup */}
-      <section className="px-6 pt-4 pb-20 flex flex-col items-center gap-6">
+      <section className="px-6 pt-4 pb-20 flex flex-col items-center gap-6" style={{ scrollSnapAlign: "center" }}>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-1">Create your account</h2>
           <p className="text-sm text-gray-400">Set up your loyalty program in under <span className="num">60</span> seconds.</p>
