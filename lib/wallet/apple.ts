@@ -19,6 +19,9 @@
 
 import { createHash } from "crypto";
 import { randomBytes } from "crypto";
+// Static import — dynamically importing "stream" yields the wrong shape in the
+// minified Vercel serverless bundle ("E is not a constructor" on new Writable()).
+import { Writable } from "stream";
 
 interface ApplePassOptions {
   token: string;
@@ -110,7 +113,6 @@ export async function generateApplePass(opts: ApplePassOptions): Promise<Buffer>
 
   // Build ZIP
   const archiver = await import("archiver");
-  const { Readable, Writable } = await import("stream");
 
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
