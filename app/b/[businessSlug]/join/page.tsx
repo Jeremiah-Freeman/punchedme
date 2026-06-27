@@ -188,6 +188,20 @@ export default function JoinPage() {
     }
   }, [pageState, punchResult]);
 
+  // Right after signing up, auto-open the Apple Wallet add sheet on iOS — it
+  // surfaces as an overlay without leaving this "You're in!" screen, so the
+  // customer never has to hunt for a button. Android/Google Wallet opens a full
+  // page, so that stays an explicit tap. The buttons remain as the fallback.
+  useEffect(() => {
+    if (pageState !== "signup_success" || !signupResult?.appleWalletUrl) return;
+    if (!/iPad|iPhone|iPod/.test(navigator.userAgent)) return;
+    const appleUrl = signupResult.appleWalletUrl;
+    const t = setTimeout(() => {
+      window.location.href = appleUrl;
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [pageState, signupResult]);
+
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
