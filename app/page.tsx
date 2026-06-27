@@ -158,18 +158,11 @@ export default function LandingPage() {
 
       {/* Nav */}
       <nav className="px-6 py-4 flex items-center justify-between w-full">
-        <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(20px, 3.5vw, 32px)", width: "auto" }} />
-        <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900">
+        <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(17px, 2.98vw, 27px)", width: "auto" }} />
+        <Link href="/auth/login" className="text-gray-600 hover:text-gray-900" style={{ fontSize: "11.9px" }}>
           Log in
         </Link>
       </nav>
-      <div className="flex items-center px-6 max-w-6xl mx-auto">
-        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
-        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to right, transparent, #6366f1)" }} />
-        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#6366f1" }} />
-        <span className="flex-1 h-px mx-2" style={{ background: "linear-gradient(to left, transparent, #6366f1)" }} />
-        <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#6366f1" }} />
-      </div>
 
       {/* Hero */}
       <section className="text-center px-6 pt-16 pb-8">
