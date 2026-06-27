@@ -152,20 +152,27 @@ const row2: StepData[] = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Gentle section-snap on phones only — each circle catches the scroll */}
-      <style>{`@media (max-width: 767px){html{scroll-snap-type:y proximity}}`}</style>
+      {/* Strict section-snap on phones only — each circle catches the scroll */}
+      <style>{`@media (max-width: 767px){html{scroll-snap-type:y mandatory}}`}</style>
       <RecoveryRedirect />
 
       {/* Nav */}
-      <nav className="px-6 py-4 flex items-center justify-between w-full">
-        <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(17px, 2.98vw, 27px)", width: "auto" }} />
-        <Link href="/auth/login" className="text-gray-600 hover:text-gray-900" style={{ fontSize: "11.9px" }}>
+      <nav className="px-6 py-2 flex items-center justify-between w-full">
+        {/* Logo → home. p-4/-m-4 gives a big tap target without shifting layout. */}
+        <Link href="/" aria-label="Punched — home" className="-ml-4 p-4 flex items-center">
+          <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(14px, 3.2vw, 18px)", width: "auto" }} />
+        </Link>
+        <Link
+          href="/auth/login"
+          className="-mr-4 p-4 text-gray-600 hover:text-gray-900"
+          style={{ fontSize: "clamp(14px, 3.2vw, 18px)" }}
+        >
           Log in
         </Link>
       </nav>
 
       {/* Hero */}
-      <section className="text-center px-6 pt-16 pb-8">
+      <section className="text-center px-6 pt-16 pb-8" style={{ scrollSnapAlign: "start" }}>
         <h1
           className="font-extrabold leading-tight tracking-tight mb-5"
           style={{ fontSize: "clamp(16px, 4.5vw, 52px)", whiteSpace: "nowrap" }}
