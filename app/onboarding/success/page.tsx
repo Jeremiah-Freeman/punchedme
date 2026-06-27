@@ -16,6 +16,13 @@ export default function OnboardingSuccessPage() {
   const router = useRouter();
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paid, setPaid] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPaid(new URLSearchParams(window.location.search).get("checkout") === "success");
+    }
+  }, []);
 
   useEffect(() => {
     fetch("/api/business/me")
@@ -61,7 +68,9 @@ export default function OnboardingSuccessPage() {
             <div>
               <p className="font-semibold text-green-900 text-sm">You&apos;re live! 🎉</p>
               <p className="text-green-700 text-xs mt-0.5">
-                {business?.name ?? "Your business"}&apos;s loyalty program is ready.
+                {paid
+                  ? "Payment received — Starter is active and your display is being prepared."
+                  : `${business?.name ?? "Your business"}'s loyalty program is ready.`}
               </p>
             </div>
           </div>

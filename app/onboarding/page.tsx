@@ -315,11 +315,31 @@ export default function OnboardingPage() {
     setError("");
     setLoading(true);
     try {
+      // Persist the display selection + plan intent first, so the choice is
+      // saved even if they bail out of checkout.
       await fetch("/api/business/onboarding-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ businessId, displayType: selectedDisplay, plan }),
       });
+
+      if (plan === "ship_now") {
+        // Real $19.99/mo Starter checkout — ships the display immediately.
+        const res = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan: "starter", shipNow: true, returnTo: "onboarding" }),
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+        setError(data.error ?? "Could not start checkout. Try again.");
+        setLoading(false);
+        return;
+      }
+
       router.push("/onboarding/success");
     } catch {
       setError("Network error. Try again.");
@@ -825,8 +845,8 @@ export default function OnboardingPage() {
                     <li key={f} className="flex items-start gap-2"><Check className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />{f}</li>
                   ))}
                 </ul>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
-                  <p className="text-[11px] text-amber-800 leading-snug">Instant checkout is launching shortly — tap to reserve your display now; we won&apos;t charge your card yet.</p>
+                <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 mb-3">
+                  <p className="text-[11px] text-indigo-800 leading-snug">Express checkout — pay in a tap with Apple Pay, Google Pay, or Link. No card form.</p>
                 </div>
                 <button
                   type="button"
@@ -834,9 +854,9 @@ export default function OnboardingPage() {
                   onClick={() => finishOnboarding("ship_now")}
                   className="w-full bg-gray-900 text-white py-3 rounded-xl text-sm font-semibold hover:bg-black disabled:opacity-50 transition-colors"
                 >
-                  {loading ? "Reserving…" : "Reserve my display"}
+                  {loading ? "Starting checkout…" : "Ship my display — $19.99/mo"}
                 </button>
-                <p className="text-xs text-gray-400 text-center mt-2">For businesses ready to put Punched on the counter right away.</p>
+                <p className="text-xs text-gray-400 text-center mt-2">For businesses ready to put Punched on the counter right away. Cancel anytime.</p>
               </div>
             </div>
 
