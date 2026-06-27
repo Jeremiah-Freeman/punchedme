@@ -2,10 +2,11 @@ import Link from "next/link";
 import RecoveryRedirect from "./RecoveryRedirect";
 import HeroSignupForm from "./HeroSignupForm";
 
-// Build a responsive font-size, optionally scaled. Mirrors the original
-// `max(<px>, <vw>)` pattern so a circle's whole text block can grow together.
-function fs(px: number, vw: number, scale = 1): string {
-  return `max(${Math.round(px * scale)}px, ${(vw * scale).toFixed(2)}vw)`;
+// Build a responsive font-size, optionally scaled. Uses container query units
+// (cqw = % of the circle's width) so text scales to the circle, not the
+// viewport — that keeps it from overflowing once the circle is size-capped.
+function fs(px: number, cqw: number, scale = 1): string {
+  return `max(${Math.round(px * scale)}px, ${(cqw * scale).toFixed(2)}cqw)`;
 }
 
 interface StepData {
@@ -21,11 +22,11 @@ function StepCircle({ s }: { s: StepData }) {
   return (
     <div
       className="relative rounded-full border-2 border-indigo-400 flex flex-col items-center justify-center text-center w-full"
-      style={{ aspectRatio: "1", padding: "clamp(32px, 7vw, 160px)" }}
+      style={{ aspectRatio: "1", maxWidth: "min(92vw, 80vh)", containerType: "inline-size" }}
     >
-      {/* STEP label — pinned near the top, nudged up from the old position */}
+      {/* STEP label — pinned near the top (sizes/positions relative to the circle) */}
       <p
-        style={{ position: "absolute", top: s.labelTop ?? "max(40px, 8vw)", fontSize: "max(32px, 4.4vw)" }}
+        style={{ position: "absolute", top: s.labelTop ?? "9cqw", fontSize: "max(28px, 4.4cqw)" }}
         className="font-bold tracking-widest text-indigo-500 uppercase"
       >
         {s.step.replace(/\d+/, "")}
@@ -34,12 +35,12 @@ function StepCircle({ s }: { s: StepData }) {
         </span>
       </p>
 
-      <div className="flex flex-col items-center" style={{ gap: fs(8, 1, k) }}>
+      <div className="flex flex-col items-center" style={{ width: "80%", gap: fs(8, 1, k) }}>
         {s.bullets.map((b, i) =>
           b === "" ? (
             <div key={i} style={{ height: fs(10, 1.2, k) }} />
           ) : b === "+" ? (
-            <p key={i} style={{ fontSize: "max(36px, 4.5vw)", fontWeight: 200, lineHeight: 1 }} className="text-gray-900">
+            <p key={i} style={{ fontSize: "max(30px, 4.5cqw)", fontWeight: 200, lineHeight: 1 }} className="text-gray-900">
               +
             </p>
           ) : b.startsWith("SUBTITLE:") ? (
