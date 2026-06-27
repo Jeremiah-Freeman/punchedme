@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Kill the browser's yellow autofill highlight — keep our own field styling
+   (white fill, dark text) even when Safari/Chrome auto-fill name/phone. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  caret-color: #111827;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -47,6 +47,17 @@ function storeToken(slug: string, token: string) {
   } catch {}
 }
 
+// Format a US phone as the customer types: 541-551-9246. Strips non-digits,
+// drops a leading "1", and only adds hyphens once the groups fill in.
+function formatPhone(input: string): string {
+  let d = input.replace(/\D/g, "");
+  if (d.length === 11 && d.startsWith("1")) d = d.slice(1);
+  d = d.slice(0, 10);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+}
+
 function getGPS(): Promise<GeolocationCoordinates | null> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
@@ -437,7 +448,7 @@ export default function JoinPage() {
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Jay"
+              placeholder="First name"
               required
               autoComplete="given-name"
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -453,10 +464,12 @@ export default function JoinPage() {
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="(555) 123-4567"
+                onChange={(e) => setPhone(formatPhone(e.target.value))}
+                placeholder="541-551-9246"
                 required
+                inputMode="tel"
                 autoComplete="tel"
+                maxLength={12}
                 className="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
