@@ -157,7 +157,7 @@ export default function LandingPage() {
       <RecoveryRedirect />
 
       {/* Nav */}
-      <nav className="px-6 py-2 flex items-center justify-between w-full">
+      <nav className="px-6 py-2 flex items-center justify-between w-full" style={{ scrollSnapAlign: "start" }}>
         {/* Logo → home. p-4/-m-4 gives a big tap target without shifting layout. */}
         <Link href="/" aria-label="Punched — home" className="-ml-4 p-4 flex items-center">
           <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(14px, 3.2vw, 18px)", width: "auto" }} />
@@ -172,7 +172,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="text-center px-6 pt-16 pb-8" style={{ scrollSnapAlign: "start" }}>
+      <section className="text-center px-6 pt-16 pb-8">
         <h1
           className="font-extrabold leading-tight tracking-tight mb-5"
           style={{ fontSize: "clamp(16px, 4.5vw, 52px)", whiteSpace: "nowrap" }}
