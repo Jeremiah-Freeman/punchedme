@@ -256,7 +256,7 @@ export default function LandingPage() {
       {/* Trust band — borrowed credibility right before the signup decision.
           The product is so simple it can read as too-good-to-be-true; we answer
           "what's the catch?" with names everyone already trusts, not friction. */}
-      <section className="px-6 pt-2 pb-10 flex flex-col items-center text-center">
+      <section className="px-6 pt-2 pb-10 flex flex-col items-center text-center" style={{ scrollSnapAlign: "center" }}>
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-5">
           Runs on the most secure platforms in the world
         </p>
