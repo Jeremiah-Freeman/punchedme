@@ -188,7 +188,7 @@ export default function LandingPage() {
         </Link>
         <Link
           href="/auth/login"
-          className="-mr-4 p-4 text-indigo-600 hover:text-indigo-700"
+          className="-mr-4 p-4 font-semibold text-indigo-600 hover:text-indigo-700"
           style={{ fontSize: "clamp(15px, 3.5vw, 20px)" }}
         >
           Log in
