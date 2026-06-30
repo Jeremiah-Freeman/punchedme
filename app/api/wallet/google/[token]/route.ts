@@ -63,6 +63,18 @@ export async function GET(
     );
   }
 
+  // Until the issuer clears Google's publishing review, the "Save to Google
+  // Wallet" link only works for registered test accounts — every real customer
+  // hits a Google-side error. So while unpublished we send them to the working
+  // web card instead of a dead end. Flip GOOGLE_WALLET_PUBLISHED=true in the
+  // env the moment Google approves and the native save goes live with no code
+  // change. ?force=1 lets a tester (Jay) still trigger the real native add.
+  const published = process.env.GOOGLE_WALLET_PUBLISHED === "true";
+  const force = request.nextUrl.searchParams.get("force") === "1";
+  if (!published && !force) {
+    return NextResponse.redirect(`${base}/pass/${token}?wallet=google-pending`);
+  }
+
   const { generateGoogleWalletUrl } = await import("@/lib/wallet/google");
 
   const biz = business as { name?: string; brand_color?: string; logo_url?: string | null; latitude?: number | null; longitude?: number | null } | null;
