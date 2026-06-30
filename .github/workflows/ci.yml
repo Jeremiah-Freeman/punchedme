@@ -50,8 +50,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright (chromium)
-        run: npx playwright install --with-deps chromium
+      # chromium for the Desktop Chrome project, webkit for the iPhone 15 project
+      # (Apple devices use WebKit) — both projects are defined in the CI config.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
 
       # Hits live production (https://punched.me) per playwright.config.ci.ts.
       # No secrets needed — tests are read-only, unauthenticated navigations.
