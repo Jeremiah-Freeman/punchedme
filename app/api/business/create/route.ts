@@ -42,6 +42,19 @@ export async function POST(request: NextRequest) {
 
     const db = createAdminClient();
 
+    // One business per owner. If they already have one (e.g. they wandered back
+    // into onboarding from a pricing link), return it instead of creating a
+    // duplicate — a second row would break the dashboard's single-business read.
+    const { data: owned } = await db
+      .from("businesses")
+      .select("id, slug")
+      .eq("owner_user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+    if (owned) {
+      return NextResponse.json({ business: owned, existing: true });
+    }
+
     // Generate unique slug
     let slug = slugify(name);
     const { data: existing } = await db

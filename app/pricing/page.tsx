@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Pricing — Punched",
@@ -69,7 +70,13 @@ const tiers: Tier[] = [
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  // Logged-in shops shouldn't be sent back through onboarding — point their
+  // CTAs at the in-dashboard billing page where they can actually upgrade.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const ctaHref = user ? "/dashboard/billing" : "/onboarding";
+
   return (
     <div className="min-h-screen bg-white">
       {/* Nav — matches the landing */}
@@ -133,7 +140,7 @@ export default function PricingPage() {
             )}
 
             <Link
-              href={t.href}
+              href={ctaHref}
               className={`block text-center py-3 rounded-xl text-sm font-semibold transition-colors ${
                 t.featured
                   ? "bg-white text-indigo-700 hover:bg-indigo-50"
