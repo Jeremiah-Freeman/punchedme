@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, slugify, appUrl } from "@/lib/utils";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
+import { PLAN_CAPS } from "@/lib/stripe";
 import { randomBytes } from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -20,6 +22,16 @@ export async function POST(request: NextRequest) {
     }
 
     const db = createAdminClient();
+
+    // Rate limit by IP — stops scripted mass-joins and phone enumeration. A real
+    // shop counter sees a handful of joins a minute; 20 is generous headroom.
+    if (!(await checkRateLimit(db, `signup:${clientIp(request)}`, 20, 60))) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please wait a minute and try again." },
+        { status: 429 }
+      );
+    }
+
     const normalizedPhone = normalizePhone(phoneNumber);
 
     // Validate phone — must be 10 or 11 digits after stripping non-numeric
@@ -34,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Find business
     const { data: business, error: bizErr } = await db
       .from("businesses")
-      .select("id, name")
+      .select("id, name, plan_type")
       .eq("slug", businessSlug)
       .single();
 
@@ -75,6 +87,23 @@ export async function POST(request: NextRequest) {
       customerId = existingCustomer.id;
       publicToken = existingCustomer.public_token;
     } else {
+      // Plan member cap — soft-pause NEW joins once the shop is at its limit.
+      // Existing members (handled above) always keep their card and keep earning.
+      const cap = PLAN_CAPS[(business.plan_type as string) ?? "free"] ?? PLAN_CAPS.free;
+      const { count: memberCount } = await db
+        .from("customers")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", business.id);
+      if ((memberCount ?? 0) >= cap) {
+        return NextResponse.json(
+          {
+            error: `${business.name} isn't accepting new members right now. Check back soon!`,
+            status: "at_capacity",
+          },
+          { status: 403 }
+        );
+      }
+
       // Create new customer
       publicToken = randomBytes(32).toString("hex");
       const walletSerial = randomBytes(16).toString("hex");

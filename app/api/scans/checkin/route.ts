@@ -92,26 +92,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // GPS check — customer must be within radius of ANY store location
-    if (latitude !== null && longitude !== null) {
-      const storeCoords = await getBusinessCoords(db, business.id, business);
-      if (storeCoords.length > 0) {
-        const nearest = Math.min(
-          ...storeCoords.map((c) =>
-            haversineDistance(latitude, longitude, c.latitude, c.longitude)
-          )
+    // GPS check — if the shop has set a location, the customer must prove they're
+    // near it. Previously a desktop user or anyone who tapped "Deny" on the
+    // location prompt skipped this entirely (lat/lng null) and got a free punch.
+    // Now: location configured ⇒ location required AND within radius. Shops that
+    // never set a location (no coords) are unenforced, as before.
+    const storeCoords = await getBusinessCoords(db, business.id, business);
+    if (storeCoords.length > 0) {
+      if (latitude === null || longitude === null) {
+        return NextResponse.json(
+          {
+            status: "location_required",
+            businessName: business.name,
+            message: `Turn on location so we can confirm you're at ${business.name}.`,
+          },
+          { status: 403 }
         );
-        if (nearest > GEO_RADIUS_M) {
-          return NextResponse.json(
-            {
-              status: "too_far",
-              distanceMeters: Math.round(nearest),
-              businessName: business.name,
-              message: `You need to be at ${business.name} to earn a punch.`,
-            },
-            { status: 403 }
-          );
-        }
+      }
+      const nearest = Math.min(
+        ...storeCoords.map((c) =>
+          haversineDistance(latitude, longitude, c.latitude, c.longitude)
+        )
+      );
+      if (nearest > GEO_RADIUS_M) {
+        return NextResponse.json(
+          {
+            status: "too_far",
+            distanceMeters: Math.round(nearest),
+            businessName: business.name,
+            message: `You need to be at ${business.name} to earn a punch.`,
+          },
+          { status: 403 }
+        );
       }
     }
 

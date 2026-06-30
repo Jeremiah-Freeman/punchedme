@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveDeviceToken } from "@/lib/device-token";
 import { processPunch, redeemReward } from "@/lib/scan";
 import { normalizePhone } from "@/lib/utils";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * Unattended kiosk endpoint. Authorized ONLY by a device token (not a
@@ -63,6 +64,15 @@ export async function POST(request: NextRequest) {
       const { phone } = body as { phone?: string };
       if (!phone) {
         return NextResponse.json({ error: "Missing phone" }, { status: 400 });
+      }
+      // Phone lookup returns a pass token, so cap it per device — a leaked kiosk
+      // URL can't be used to bulk-enumerate the customer base. Real staff lookups
+      // are occasional; 20/min is plenty.
+      if (!(await checkRateLimit(db, `kiosk-lookup:${device.businessId}`, 20, 60))) {
+        return NextResponse.json(
+          { error: "Too many lookups. Wait a moment and try again." },
+          { status: 429 }
+        );
       }
       const { data: customer } = await db
         .from("customers")

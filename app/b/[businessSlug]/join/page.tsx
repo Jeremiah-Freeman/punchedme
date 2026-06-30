@@ -9,7 +9,8 @@ type PageState =
   | "checking"       // initial — localStorage check + GPS for returning customers
   | "checking_in"    // returning customer — calling checkin API
   | "punch_result"   // returning customer — showing punch result
-  | "too_far"        // GPS rejected
+  | "too_far"        // GPS rejected — too far from store
+  | "location_required" // shop has a location but we got no GPS (denied/desktop)
   | "closed"         // overnight — punches paused
   | "signup"         // new customer — show form
   | "signup_success"; // just signed up
@@ -113,6 +114,10 @@ export default function JoinPage() {
         const data = await res.json();
         if (data.status === "too_far") {
           setPageState("too_far");
+          return;
+        }
+        if (data.status === "location_required") {
+          setPageState("location_required");
           return;
         }
         if (data.status === "closed") {
@@ -270,6 +275,35 @@ export default function JoinPage() {
             This QR only works when you&apos;re physically at{" "}
             {businessName || "the store"}. Come in and scan again!
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageState === "location_required") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <MapPin className="w-14 h-14 text-indigo-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-3">Turn on location</h1>
+          <p className="text-gray-500 mb-6">
+            {businessName || "This shop"} checks that you&apos;re here before adding a
+            punch. Allow location access, then try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              const token = getStoredToken(slug);
+              if (!token) { setPageState("signup"); return; }
+              setPageState("checking_in");
+              getGPS().then((coords) =>
+                performCheckin(token, coords?.latitude ?? null, coords?.longitude ?? null)
+              );
+            }}
+            className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+          >
+            I&apos;ve enabled location — try again
+          </button>
         </div>
       </div>
     );

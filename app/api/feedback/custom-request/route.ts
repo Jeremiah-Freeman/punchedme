@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,11 @@ export async function POST(request: NextRequest) {
     }
 
     const db = createAdminClient();
+
+    // Open, unauthenticated endpoint — cap it so it can't be used as a spam sink.
+    if (!(await checkRateLimit(db, `feedback:${clientIp(request)}`, 5, 600))) {
+      return NextResponse.json({ ok: true });
+    }
     await db.from("custom_requests").insert({
       business_id: businessId ?? null,
       message: message.trim(),

@@ -65,9 +65,12 @@ export async function GET(
     }
   }
 
-  // Brand-new owner: stash the code and send them to sign up. business-create
-  // reads this cookie and claims the code to their new shop.
-  const res = NextResponse.redirect(new URL("/auth/signup", origin));
+  // Unclaimed + not a logged-in owner. We can't tell an owner setting up from a
+  // customer who scanned a sticker the shop hasn't activated yet — so send them
+  // to a friendly interstitial that offers both paths, rather than dumping a
+  // customer straight onto "create your business account." The claim cookie is
+  // still set so an owner who taps "set up my shop" claims this sticker.
+  const res = NextResponse.redirect(new URL("/sticker/inactive", origin));
   res.cookies.set("pending_sticker_code", code, {
     httpOnly: true,
     sameSite: "lax",

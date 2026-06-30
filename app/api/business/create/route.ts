@@ -7,9 +7,13 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
   if (!address.trim()) return null;
   try {
     const encoded = encodeURIComponent(address);
+    // Cap the geocode at 4s — a slow/blocked Nominatim must never hang signup.
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`,
-      { headers: { "User-Agent": "Punched.me/1.0 (loyalty@punched.me)" } }
+      {
+        headers: { "User-Agent": "Punched.me/1.0 (loyalty@punched.me)" },
+        signal: AbortSignal.timeout(4000),
+      }
     );
     if (!res.ok) return null;
     const data = await res.json();
