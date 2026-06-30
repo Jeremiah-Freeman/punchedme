@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Settings, QrCode, Package, MapPin } from "lucide-react";
+import { LayoutDashboard, Users, Settings, QrCode, Package, MapPin, CreditCard } from "lucide-react";
 
 // Ordered by importance — the first five surface without scrolling in the
 // mobile bottom carousel; the rest scroll into view. Shared by the desktop
@@ -10,4 +10,5 @@ export const nav = [
   { href: "/dashboard/program", label: "Program", icon: Package },
   { href: "/dashboard/assets", label: "Assets", icon: Settings },
   { href: "/dashboard/locations", label: "Locations", icon: MapPin },
+  { href: "/dashboard/billing", label: "Plan & Billing", icon: CreditCard },
 ];

@@ -131,6 +131,16 @@ export default async function DashboardPage({
         </div>
       )}
 
+      {/* Payment past due — surfaces above everything so it can't be missed */}
+      {business.payment_status === "past_due" && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 mb-6 flex items-center justify-between gap-4">
+          <p className="text-sm text-red-800 font-medium">Your last payment failed — update your card to keep your plan active.</p>
+          <Link href="/dashboard/billing" className="shrink-0 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors">
+            Fix payment
+          </Link>
+        </div>
+      )}
+
       {/* Plan milestone */}
       <MilestoneCard
         milestone={milestone}
@@ -246,6 +256,9 @@ function MilestoneCard({
         <p className="text-xs text-gray-500 mt-2">
           <span className="font-semibold text-indigo-700">{memberCount} / {freeCap}</span> reward members until your {displayLabel} unlocks.
         </p>
+        <Link href="/dashboard/billing" className="inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-700 mt-3">
+          See plans &amp; upgrade now →
+        </Link>
       </div>
     );
   }
@@ -297,6 +310,9 @@ function MilestoneCard({
       <div className="bg-green-50 border border-green-200 rounded-2xl p-5 mb-8">
         <p className="font-semibold text-green-900">Starter is active.</p>
         <p className="text-sm text-green-800 mt-0.5">Your {displayLabel} is {statusLabel[displayStatus] ?? "being prepared"}.</p>
+        <Link href="/dashboard/billing" className="inline-block text-xs font-semibold text-green-800 hover:text-green-900 mt-3 underline">
+          Manage plan &amp; billing
+        </Link>
       </div>
     );
   }
