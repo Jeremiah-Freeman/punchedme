@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import RecoveryRedirect from "./RecoveryRedirect";
+import ScrollReset from "./ScrollReset";
 import HeroSignupForm from "./HeroSignupForm";
 
 // Build a responsive font-size, optionally scaled. Uses container query units
@@ -177,6 +178,7 @@ export default function LandingPage() {
       {/* Strict section-snap on phones only — each circle catches the scroll */}
       <style>{`@media (max-width: 767px){html{scroll-snap-type:y mandatory}}`}</style>
       <RecoveryRedirect />
+      <ScrollReset />
 
       {/* Nav */}
       <nav className="px-6 py-2 flex items-center justify-between w-full" style={{ scrollSnapAlign: "start" }}>
