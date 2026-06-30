@@ -157,9 +157,13 @@ export async function POST(request: NextRequest) {
       !!process.env.APPLE_TEAM_ID &&
       !!process.env.APPLE_PASS_TYPE_ID &&
       !!process.env.APPLE_PASS_CERTIFICATE;
+    // Only offer the Google Wallet button once the issuer clears Google's
+    // publishing review (GOOGLE_WALLET_PUBLISHED=true). Before that the native
+    // save errors for non-test accounts, so customers use the web card instead.
     const googleConfigured =
       !!process.env.GOOGLE_WALLET_ISSUER_ID &&
-      !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+      !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+      process.env.GOOGLE_WALLET_PUBLISHED === "true";
 
     return NextResponse.json({
       customerId,

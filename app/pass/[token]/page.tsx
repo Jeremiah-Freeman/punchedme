@@ -53,6 +53,11 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
   const googleWalletUrl = `/api/wallet/google/${token}`;
 
   const walletNotConfigured = wallet === "apple-not-configured" || wallet === "google-not-configured";
+  // Google Wallet only serves real customers once the issuer clears Google's
+  // publishing review. Until then we keep the native button off this card so
+  // nobody taps into a Google error — the QR above already works everywhere.
+  const googlePublished = process.env.GOOGLE_WALLET_PUBLISHED === "true";
+  const googlePending = wallet === "google-pending";
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-6">
@@ -130,6 +135,15 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
           </div>
         )}
 
+        {googlePending && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-3">
+            <p className="text-sm text-amber-800">
+              Google Wallet is being finalized. This is your card — show the QR
+              code at the counter and you&apos;re all set.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-2">
           <a
             href={appleWalletUrl}
@@ -137,12 +151,14 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
           >
             Add to Apple Wallet
           </a>
-          <a
-            href={googleWalletUrl}
-            className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Add to Google Wallet
-          </a>
+          {googlePublished && (
+            <a
+              href={googleWalletUrl}
+              className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Add to Google Wallet
+            </a>
+          )}
         </div>
       </div>
     </div>
