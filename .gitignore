@@ -8,3 +8,7 @@ test-results/
 .vercel
 .env*
 playwright-report/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
