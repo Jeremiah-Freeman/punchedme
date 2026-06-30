@@ -50,14 +50,28 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", businessId);
 
-    // Record the display order (fulfillment tracking).
-    await db.from("display_orders").insert({
+    // Record the display order (fulfillment tracking). Upsert per business so
+    // re-walking onboarding updates the existing order instead of spawning
+    // duplicates in the fulfillment queue.
+    const fields = {
       business_id: businessId,
       display_type: displayType,
       status: displayStatus,
       shipping_name: biz.contact_name ?? biz.name,
       shipping_address: biz.address ?? null,
-    });
+    };
+    const { data: existingOrder } = await db
+      .from("display_orders")
+      .select("id")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existingOrder) {
+      await db.from("display_orders").update(fields).eq("id", existingOrder.id);
+    } else {
+      await db.from("display_orders").insert(fields);
+    }
 
     return NextResponse.json({ ok: true, displayStatus });
   } catch (err) {
