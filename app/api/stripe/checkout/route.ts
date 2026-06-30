@@ -27,12 +27,37 @@ export async function POST(request: NextRequest) {
     const db = createAdminClient();
     const { data: biz } = await db
       .from("businesses")
-      .select("id, name, contact_email, contact_name, stripe_customer_id")
+      .select("id, name, contact_email, contact_name, stripe_customer_id, stripe_subscription_id")
       .eq("owner_user_id", user.id)
       .single();
     if (!biz) return NextResponse.json({ error: "No business" }, { status: 403 });
 
     const stripe = getStripe();
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.punched.me";
+
+    // Plan SWITCH for an existing subscriber — modify the current subscription
+    // in place (with proration) rather than starting a second one, which would
+    // double-bill. Only a shop with no live subscription goes through Checkout.
+    if (biz.stripe_subscription_id) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(biz.stripe_subscription_id as string);
+        if (["active", "trialing", "past_due"].includes(sub.status)) {
+          const item = sub.items.data[0];
+          if (item && item.price?.id !== priceId) {
+            await stripe.subscriptions.update(sub.id, {
+              items: [{ id: item.id, price: priceId }],
+              proration_behavior: "create_prorations",
+              metadata: { businessId: biz.id, plan },
+            });
+            await db.from("businesses").update({ plan_type: plan }).eq("id", biz.id);
+          }
+          return NextResponse.json({ url: `${base}/dashboard/billing?switched=1` });
+        }
+      } catch (err) {
+        // Stale/invalid subscription id — fall through to a fresh checkout.
+        console.warn("subscription switch failed, starting fresh checkout:", err);
+      }
+    }
 
     // Reuse or create the Stripe customer for this business.
     let customerId = biz.stripe_customer_id as string | null;
@@ -46,7 +71,6 @@ export async function POST(request: NextRequest) {
       await db.from("businesses").update({ stripe_customer_id: customerId }).eq("id", biz.id);
     }
 
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.punched.me";
     const onboarding = returnTo === "onboarding";
     const successPath = onboarding
       ? "/onboarding/success?checkout=success"

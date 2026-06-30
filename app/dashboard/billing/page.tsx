@@ -28,7 +28,11 @@ const PLANS: Record<string, { name: string; price: string; cap: number; blurb: s
   },
 };
 
-export default async function BillingPage() {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: { switched?: string; checkout?: string };
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
@@ -59,6 +63,13 @@ export default async function BillingPage() {
         <h1 className="text-2xl font-bold text-gray-900">Plan &amp; Billing</h1>
         <p className="text-gray-500 text-sm mt-0.5">Manage your plan, payment, and reward-member limit.</p>
       </div>
+
+      {/* Plan switched confirmation */}
+      {searchParams?.switched === "1" && (
+        <div className="bg-green-50 border border-green-200 text-green-800 rounded-2xl px-5 py-4 mb-6 text-sm font-medium">
+          ✅ Plan updated. The change is effective now and prorated on your next invoice.
+        </div>
+      )}
 
       {/* Past-due warning */}
       {pastDue && (
