@@ -4,7 +4,6 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { SocialLoginButtons } from "@/components/SocialLoginButtons";
 
 export default function HeroSignupForm() {
@@ -74,7 +73,7 @@ export default function HeroSignupForm() {
         disabled={loading}
         className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3.5 rounded-xl text-base font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
       >
-        {loading ? "Creating account…" : <><span>Punch In</span> <ArrowRight className="w-4 h-4" /></>}
+        {loading ? "Creating account…" : "Quick Sign Up"}
       </button>
       <p className="text-sm text-gray-500 text-center">
         Already have an account?{" "}
