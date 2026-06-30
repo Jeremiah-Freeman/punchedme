@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Copy, Download, ExternalLink } from "lucide-react";
+import CodesManager from "./CodesManager";
 
 export default function AssetsPage() {
   const [business, setBusiness] = useState<{ name: string; slug: string; brand_color: string } | null>(null);
@@ -151,6 +152,8 @@ export default function AssetsPage() {
           </a>
         </div>
       </div>
+
+      <CodesManager />
     </div>
   );
 }
