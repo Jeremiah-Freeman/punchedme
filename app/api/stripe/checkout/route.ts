@@ -55,17 +55,38 @@ export async function POST(request: NextRequest) {
       ? "/onboarding?checkout=cancelled"
       : "/dashboard?checkout=cancelled";
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      allow_promotion_codes: true,
-      success_url: `${base}${successPath}`,
-      cancel_url: `${base}${cancelPath}`,
-      metadata: { businessId: biz.id, plan, shipNow: shipNow ? "1" : "0" },
-      // Mirror onto the subscription so subscription.* events can resolve the business.
-      subscription_data: { metadata: { businessId: biz.id, plan } },
-    });
+    const buildSession = (cust: string) =>
+      stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer: cust,
+        line_items: [{ price: priceId, quantity: 1 }],
+        allow_promotion_codes: true,
+        success_url: `${base}${successPath}`,
+        cancel_url: `${base}${cancelPath}`,
+        metadata: { businessId: biz.id, plan, shipNow: shipNow ? "1" : "0" },
+        // Mirror onto the subscription so subscription.* events can resolve the business.
+        subscription_data: { metadata: { businessId: biz.id, plan } },
+      });
+
+    let session;
+    try {
+      session = await buildSession(customerId);
+    } catch (err) {
+      // Self-heal a stale/invalid stored customer (e.g. a test-mode id after a
+      // switch to live, or a deleted customer): mint a fresh one and retry once.
+      const code = (err as { code?: string })?.code;
+      if (code === "resource_missing") {
+        const customer = await stripe.customers.create({
+          email: biz.contact_email ?? user.email ?? undefined,
+          name: biz.contact_name ?? biz.name ?? undefined,
+          metadata: { businessId: biz.id },
+        });
+        await db.from("businesses").update({ stripe_customer_id: customer.id }).eq("id", biz.id);
+        session = await buildSession(customer.id);
+      } else {
+        throw err;
+      }
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
