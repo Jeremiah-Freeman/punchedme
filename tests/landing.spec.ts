@@ -45,6 +45,7 @@ test.describe('Landing page', () => {
 
   test('"There\'s no step three" copy is present', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText(/no step three/i)).toBeVisible();
+    // Rendered in both the desktop and mobile step lists, so scope to the first.
+    await expect(page.getByText(/no step three/i).first()).toBeVisible();
   });
 });

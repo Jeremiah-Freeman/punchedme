@@ -12,8 +12,8 @@ test.describe('Join page (/b/[slug]/join)', () => {
         .forEach((k) => localStorage.removeItem(k));
     });
     await page.reload();
-    await expect(page.getByPlaceholder('Jay')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByPlaceholder('(555) 123-4567')).toBeVisible();
+    await expect(page.getByPlaceholder('First name')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByPlaceholder('541-551-9246')).toBeVisible();
   });
 
   test('signup form validates short phone number', async ({ page }) => {
@@ -24,8 +24,8 @@ test.describe('Join page (/b/[slug]/join)', () => {
         .forEach((k) => localStorage.removeItem(k));
     });
     await page.reload();
-    await page.getByPlaceholder('Jay').fill('Test');
-    await page.getByPlaceholder('(555) 123-4567').fill('123');
+    await page.getByPlaceholder('First name').fill('Test');
+    await page.getByPlaceholder('541-551-9246').fill('123');
     await page.getByRole('button', { name: /join rewards/i }).click();
     await expect(page.getByText(/valid 10-digit phone/i)).toBeVisible({ timeout: 15000 });
   });

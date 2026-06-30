@@ -4,7 +4,16 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['**/smoke.spec.ts', '**/landing.spec.ts', '**/join.spec.ts'],
+  // All of these are read-only / unauthenticated and safe to run against prod.
+  testMatch: [
+    '**/smoke.spec.ts',
+    '**/landing.spec.ts',
+    '**/join.spec.ts',
+    '**/link-integrity.spec.ts',
+    '**/api-security.spec.ts',
+    '**/customer-journey.spec.ts',
+    '**/routes-extra.spec.ts',
+  ],
   fullyParallel: true,
   retries: 1,
   reporter: [
