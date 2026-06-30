@@ -119,6 +119,14 @@ export default function JoinPage() {
           setPageState("closed");
           return;
         }
+        // Orphaned/stale card (deleted record, shop changed slug, program turned
+        // off) comes back as "invalid" with no punch data — clear the dead token
+        // and let them re-join cleanly instead of rendering "Welcome back, undefined".
+        if (data.status === "invalid" || !data.customerName) {
+          try { localStorage.removeItem(`punchedme_token_${slug}`); } catch {}
+          setPageState("signup");
+          return;
+        }
         setPunchResult(data as ScanResult);
         setPageState("punch_result");
       } catch {
@@ -376,7 +384,7 @@ export default function JoinPage() {
         <div className="w-full max-w-sm text-center">
           <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">
-            You&apos;re in! First punch added.
+            You&apos;re in! 🎉
           </h1>
           <p className="text-gray-600 mb-8">
             Add your card to your phone — it&apos;ll pop up on your lock screen

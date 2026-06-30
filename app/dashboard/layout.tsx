@@ -15,7 +15,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .from("businesses")
     .select("name, slug")
     .eq("owner_user_id", user.id)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   if (!business) redirect("/onboarding");
 

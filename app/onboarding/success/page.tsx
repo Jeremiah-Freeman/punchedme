@@ -69,7 +69,7 @@ export default function OnboardingSuccessPage() {
               <p className="font-semibold text-green-900 text-sm">You&apos;re live! 🎉</p>
               <p className="text-green-700 text-xs mt-0.5">
                 {paid
-                  ? "Payment received — Starter is active and your display is being prepared."
+                  ? "Payment received — we're setting up your Starter plan and counter display now."
                   : `${business?.name ?? "Your business"}'s loyalty program is ready.`}
               </p>
             </div>

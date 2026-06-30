@@ -41,7 +41,8 @@ export default async function BillingPage({
     .from("businesses")
     .select("*")
     .eq("owner_user_id", user.id)
-    .single();
+    .limit(1)
+    .maybeSingle();
   if (!business) redirect("/onboarding");
 
   const { count } = await supabase

@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       ? "/onboarding/success?checkout=success"
       : "/dashboard?checkout=success";
     const cancelPath = onboarding
-      ? "/onboarding?checkout=cancelled"
+      ? "/onboarding?step=plan&checkout=cancelled"
       : "/dashboard?checkout=cancelled";
 
     const buildSession = (cust: string) =>

@@ -18,7 +18,8 @@ export default async function DashboardPage({
     .from("businesses")
     .select("*")
     .eq("owner_user_id", user.id)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   if (!business) redirect("/onboarding");
 

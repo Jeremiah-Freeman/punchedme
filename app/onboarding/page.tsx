@@ -215,9 +215,12 @@ export default function OnboardingPage() {
     window.history.replaceState(null, "", url);
   }, [step]);
 
-  // If they refresh on the program step, recover their business from the server
+  // If they refresh on any step that needs a business (program / display / plan),
+  // recover it from the server — otherwise businessId is "" and finishing the
+  // wizard silently 400s and loses their display/plan choice.
   useEffect(() => {
-    if (step !== "program" || businessId) return;
+    const needsBusiness = step === "program" || step === "display" || step === "plan";
+    if (!needsBusiness || businessId) return;
     fetch("/api/business/me")
       .then((r) => r.json())
       .then((d) => {
@@ -226,7 +229,7 @@ export default function OnboardingPage() {
           setBusinessName(d.business.name ?? "");
           if (d.business.brand_color) setBrandColor(d.business.brand_color);
         } else {
-          // No business yet — they can't be on the program step
+          // No business yet — they can't be past the business step
           setStep("business");
         }
       })
@@ -525,7 +528,7 @@ export default function OnboardingPage() {
                         className="w-full sm:w-1/2 mx-auto block bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
                         style={{ fontSize: "1rem" }}
                       >
-                        {loading ? "Saving…" : "Last Step"}
+                        {loading ? "Saving…" : "Continue"}
                       </button>
                     </form>
                   </div>

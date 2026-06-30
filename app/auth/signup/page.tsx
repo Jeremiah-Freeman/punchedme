@@ -45,7 +45,7 @@ export default function SignupPage() {
       router.refresh();
     } else {
       // Email confirmation required
-      router.push("/auth/confirm-email");
+      router.push(`/auth/confirm-email?email=${encodeURIComponent(email)}`);
     }
 
     setLoading(false);
