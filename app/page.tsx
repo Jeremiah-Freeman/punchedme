@@ -182,12 +182,12 @@ export default function LandingPage() {
       <nav className="px-6 py-2 flex items-center justify-between w-full" style={{ scrollSnapAlign: "start" }}>
         {/* Logo → home. p-4/-m-4 gives a big tap target without shifting layout. */}
         <Link href="/" aria-label="Punched — home" className="-ml-4 p-4 flex items-center">
-          <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(14px, 3.2vw, 18px)", width: "auto" }} />
+          <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(15px, 3.5vw, 20px)", width: "auto" }} />
         </Link>
         <Link
           href="/auth/login"
-          className="-mr-4 p-4 text-gray-600 hover:text-gray-900"
-          style={{ fontSize: "clamp(14px, 3.2vw, 18px)" }}
+          className="-mr-4 p-4 text-indigo-600 hover:text-indigo-700"
+          style={{ fontSize: "clamp(15px, 3.5vw, 20px)" }}
         >
           Log in
         </Link>
