@@ -196,7 +196,14 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="text-center px-6 pt-16 pb-8">
+      <section className="text-center px-6 pt-8 pb-8">
+        {/* Moe banner — the first thing on the page: "Do you have your punch card?" */}
+        <img
+          src="/do-you-trimmed.png"
+          alt="Do you have your punch card?"
+          className="w-full max-w-3xl mx-auto mb-8"
+          style={{ height: "auto" }}
+        />
         <h1
           className="font-extrabold leading-tight tracking-tight mb-5"
           style={{ fontSize: "clamp(16px, 4.5vw, 52px)", whiteSpace: "nowrap" }}
@@ -218,14 +225,8 @@ export default function LandingPage() {
           <span className="font-semibold text-gray-800" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
             {"No app, No login, No friction"}
           </span>
-          <span className="font-semibold text-indigo-600" style={{ fontSize: "clamp(15px, 4.4vw, 34px)", whiteSpace: "nowrap" }}>
-            {"It just works"}
-          </span>
         </div>
       </section>
-
-      {/* Small divider between the copy and the YOU: steps */}
-      <DotDivider />
 
       {/* Steps — row 1 (business setup), led by the "YOU:" label (2x) */}
       <section className="flex flex-col items-center gap-4 px-4 pt-4 pb-5">
