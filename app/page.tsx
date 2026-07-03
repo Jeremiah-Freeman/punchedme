@@ -24,7 +24,7 @@ function StepCircle({ s }: { s: StepData }) {
   return (
     <div
       className="relative rounded-full border-2 border-indigo-400 flex flex-col items-center justify-center text-center w-full"
-      style={{ aspectRatio: "1", maxWidth: "min(92vw, 80vh)", containerType: "inline-size", scrollSnapAlign: "center" }}
+      style={{ aspectRatio: "1", maxWidth: "min(92vw, 80vh)", containerType: "inline-size" }}
     >
       {/* STEP label — pinned near the top (sizes/positions relative to the circle) */}
       <p
@@ -69,19 +69,6 @@ function StepCircle({ s }: { s: StepData }) {
           </p>
         )}
       </div>
-    </div>
-  );
-}
-
-// 3 dots + 2 gradient lines — the recurring divider motif.
-function DotDivider() {
-  return (
-    <div className="flex items-center justify-center w-32 mx-auto my-5">
-      <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
-      <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to right, transparent, #6366f1)" }} />
-      <span className="rounded-full shrink-0" style={{ width: "3px", height: "3px", background: "#6366f1" }} />
-      <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to left, transparent, #6366f1)" }} />
-      <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
     </div>
   );
 }
@@ -174,36 +161,53 @@ function GoogleGMark() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Strict section-snap on phones only — each circle catches the scroll */}
-      <style>{`@media (max-width: 767px){html{scroll-snap-type:y mandatory}}`}</style>
+    <div className="bg-white">
+      {/* Full-viewport scroll snap: each section stands alone, one per screen. */}
+      <style>{`
+        html { scroll-snap-type: y mandatory; }
+        .snap {
+          min-height: 100vh;
+          min-height: 100svh;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+        }
+      `}</style>
       <RecoveryRedirect />
       <ScrollReset />
 
-      {/* Nav */}
-      <nav className="px-6 py-2 flex items-center justify-between w-full" style={{ scrollSnapAlign: "start" }}>
-        {/* Logo → home. p-4/-m-4 gives a big tap target without shifting layout. */}
-        <Link href="/" aria-label="Punched — home" className="-ml-4 p-4 flex items-center">
-          <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(15px, 3.5vw, 20px)", width: "auto" }} />
-        </Link>
-        <Link
-          href="/auth/login"
-          className="-mr-4 p-4 font-semibold text-indigo-600 hover:text-indigo-700"
-          style={{ fontSize: "clamp(15px, 3.5vw, 20px)" }}
-        >
-          Log in
-        </Link>
-      </nav>
+      {/* 1 — Nav (logo + log in) pinned up top, Moe banner centered below it */}
+      <section className="snap" style={{ justifyContent: "flex-start" }}>
+        <nav className="px-6 py-2 flex items-center justify-between w-full">
+          {/* Logo → home. p-4/-m-4 gives a big tap target without shifting layout. */}
+          <Link href="/" aria-label="Punched — home" className="-ml-4 p-4 flex items-center">
+            <img src="/punched-only.png" alt="Punched" style={{ height: "clamp(15px, 3.5vw, 20px)", width: "auto" }} />
+          </Link>
+          <Link
+            href="/auth/login"
+            className="-mr-4 p-4 font-semibold text-indigo-600 hover:text-indigo-700"
+            style={{ fontSize: "clamp(15px, 3.5vw, 20px)" }}
+          >
+            Log in
+          </Link>
+        </nav>
+        <div className="flex-1 w-full flex items-center justify-center px-6">
+          {/* Moe banner — the first thing on the page: "Do you have your punch card?" */}
+          <img
+            src="/do-you-trimmed.png"
+            alt="Do you have your punch card?"
+            className="w-full max-w-3xl"
+            style={{ height: "auto" }}
+          />
+        </div>
+      </section>
 
-      {/* Hero */}
-      <section className="text-center px-6 pt-8 pb-8">
-        {/* Moe banner — the first thing on the page: "Do you have your punch card?" */}
-        <img
-          src="/do-you-trimmed.png"
-          alt="Do you have your punch card?"
-          className="w-full max-w-3xl mx-auto mb-8"
-          style={{ height: "auto" }}
-        />
+      {/* 2 — Hero copy, alone on its own screen */}
+      <section className="snap text-center px-6">
         <h1
           className="font-extrabold leading-tight tracking-tight mb-5"
           style={{ fontSize: "clamp(16px, 4.5vw, 52px)", whiteSpace: "nowrap" }}
@@ -228,38 +232,33 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Steps — row 1 (business setup), led by the "YOU:" label (2x) */}
-      <section className="flex flex-col items-center gap-4 px-4 pt-4 pb-5">
+      {/* 3 — "YOU:" header, alone */}
+      <section className="snap">
         <StepHeader word="you" />
-        {row1.map((s) => (
-          <StepCircle key={s.step} s={s} />
-        ))}
       </section>
 
-      {/* Divider before the "how it works" row */}
-      <DotDivider />
+      {/* 4–6 — each YOU step circle on its own screen */}
+      {row1.map((s, i) => (
+        <section key={`r1-${i}`} className="snap px-4">
+          <StepCircle s={s} />
+        </section>
+      ))}
 
-      {/* Steps — row 2 (how it works for the customer), led by "THEM:" */}
-      <section className="flex flex-col items-center gap-4 px-4 py-5">
+      {/* 7 — "THEM:" header, alone */}
+      <section className="snap">
         <StepHeader word="them" />
-        {row2.map((s, i) => (
-          <StepCircle key={`r2-${i}`} s={s} />
-        ))}
       </section>
 
-      {/* Tiny divider between steps and signup */}
-      <div className="flex items-center justify-center w-32 mx-auto py-2">
-        <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
-        <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to right, transparent, #6366f1)" }} />
-        <span className="rounded-full shrink-0" style={{ width: "3px", height: "3px", background: "#6366f1" }} />
-        <span className="flex-1 mx-1.5" style={{ height: "0.5px", background: "linear-gradient(to left, transparent, #6366f1)" }} />
-        <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: "#6366f1" }} />
-      </div>
+      {/* 8–10 — each THEM step circle on its own screen */}
+      {row2.map((s, i) => (
+        <section key={`r2-${i}`} className="snap px-4">
+          <StepCircle s={s} />
+        </section>
+      ))}
 
-      {/* Trust band — borrowed credibility right before the signup decision.
-          The product is so simple it can read as too-good-to-be-true; we answer
-          "what's the catch?" with names everyone already trusts, not friction. */}
-      <section className="px-6 pt-2 pb-10 flex flex-col items-center text-center" style={{ scrollSnapAlign: "center" }}>
+      {/* 11 — Trust band, alone. Borrowed credibility right before the signup
+          decision; answers "what's the catch?" with names people already trust. */}
+      <section className="snap px-6 text-center">
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-5">
           Runs on the most secure platforms in the world
         </p>
@@ -288,8 +287,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Signup */}
-      <section className="px-6 pt-4 pb-20 flex flex-col items-center gap-6" style={{ scrollSnapAlign: "center" }}>
+      {/* 12 — Signup, alone */}
+      <section className="snap px-6" style={{ gap: "1.5rem" }}>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-1">Create your account</h2>
           <p className="text-sm text-gray-400">Set up your loyalty program in under <span className="num">60</span> seconds.</p>
