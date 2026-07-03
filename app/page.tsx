@@ -132,7 +132,7 @@ const row2: StepData[] = [
     bullets: [
       "TITLE:There's no step three",
       "When the customer reaches the preset amount, they show you at checkout",
-      "You're good to go",
+      "SUBTITLE:(No friction)",
     ],
     closing: null,
   },
@@ -189,7 +189,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/auth/login"
-            className="-mr-4 p-4 font-semibold text-indigo-600 hover:text-indigo-700"
+            className="-mr-4 p-4 font-semibold text-indigo-800 hover:text-indigo-900"
             style={{ fontSize: "clamp(15px, 3.5vw, 20px)" }}
           >
             Log in
@@ -273,7 +273,7 @@ export default function LandingPage() {
             Stripe
           </span>
         </div>
-        <p className="text-gray-500 max-w-md mb-5" style={{ fontSize: "clamp(13px, 3.4vw, 15px)", lineHeight: 1.6 }}>
+        <p className="text-gray-700 max-w-md mb-5" style={{ fontSize: "clamp(15px, 3.8vw, 17px)", lineHeight: 1.6, textWrap: "balance" }}>
           Cards live in <span className="font-medium text-gray-700">Apple Wallet</span> &amp;{" "}
           <span className="font-medium text-gray-700">Google Wallet</span>. Payments run on{" "}
           <span className="font-medium text-gray-700">Stripe</span>. Plus fraud protection and
@@ -289,9 +289,11 @@ export default function LandingPage() {
 
       {/* 12 — Signup, alone */}
       <section className="snap px-6" style={{ gap: "1.5rem" }}>
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Create your account</h2>
-          <p className="text-sm text-gray-400">Set up your loyalty program in under <span className="num">60</span> seconds.</p>
+        <div className="text-center" style={{ maxWidth: "22rem" }}>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1" style={{ textWrap: "balance" }}>Create your account</h2>
+          <p className="text-sm text-gray-500" style={{ textWrap: "balance" }}>
+            Set up your loyalty program in under <span className="num">60</span> seconds.
+          </p>
         </div>
         <HeroSignupForm />
       </section>
