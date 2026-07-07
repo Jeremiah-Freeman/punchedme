@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBusinessCoords } from "@/lib/locations";
+import { moeMoney, rankFor, rankJustEarned } from "@/lib/loyalty-flavor";
 import type { ScanResult } from "@/lib/types";
 
 const GEO_RADIUS_M = 100;
@@ -236,13 +237,14 @@ export async function POST(request: NextRequest) {
 
     // Add punch
     const newPunches = account.current_punches + 1;
+    const newLifetime = account.lifetime_punches + 1;
     const rewardEarned = newPunches >= program.punches_required;
 
     await db
       .from("loyalty_accounts")
       .update({
         current_punches: newPunches,
-        lifetime_punches: account.lifetime_punches + 1,
+        lifetime_punches: newLifetime,
         ...(rewardEarned ? { rewards_earned: account.rewards_earned + 1 } : {}),
       })
       .eq("id", account.id);
@@ -260,6 +262,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Honest-points layer — computed from the lifetime count we just wrote.
+    const honest = {
+      lifetimePunches: newLifetime,
+      rank: rankFor(newLifetime),
+      rankJustEarned: rankJustEarned(newLifetime),
+      moeMoney: moeMoney(newLifetime),
+    };
+
     if (rewardEarned) {
       return NextResponse.json<ScanResult>({
         status: "reward_available",
@@ -270,6 +280,7 @@ export async function POST(request: NextRequest) {
         message: `You earned your ${program.reward_name}! Show this screen to claim it.`,
         customerId: customer.id,
         programId: program.id,
+        ...honest,
       });
     }
 
@@ -282,6 +293,7 @@ export async function POST(request: NextRequest) {
       message: `Punch added! ${newPunches} of ${program.punches_required} visits.`,
       customerId: customer.id,
       programId: program.id,
+      ...honest,
     });
   } catch (err) {
     console.error("Checkin error:", err);

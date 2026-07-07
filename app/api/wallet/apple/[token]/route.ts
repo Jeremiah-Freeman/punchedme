@@ -53,11 +53,12 @@ export async function GET(
 
   const { data: account } = await db
     .from("loyalty_accounts")
-    .select("current_punches")
+    .select("current_punches, lifetime_punches")
     .eq("customer_id", customer.id)
     .single();
 
   const currentPunches = account?.current_punches ?? 0;
+  const lifetimePunches = account?.lifetime_punches ?? 0;
   const punchesRequired = program?.punches_required ?? 10;
   const rewardName = program?.reward_name ?? "Reward";
   const businessName = business?.name ?? "Rewards";
@@ -95,6 +96,7 @@ export async function GET(
     brandColor,
     logoUrl,
     currentPunches,
+    lifetimePunches,
     punchesRequired,
     rewardName,
     appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",

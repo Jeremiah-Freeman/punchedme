@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { QRCodeSVG } from "qrcode.react";
 import { notFound } from "next/navigation";
+import { moeMoney, rankFor } from "@/lib/loyalty-flavor";
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -41,6 +42,7 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
     .single();
 
   const currentPunches = account?.current_punches ?? 0;
+  const lifetimePunches = account?.lifetime_punches ?? 0;
   const punchesRequired = program?.punches_required ?? 10;
   const rewardName = program?.reward_name ?? "Reward";
   const businessName = business?.name ?? "Rewards";
@@ -116,6 +118,14 @@ export default async function FallbackPassPage({ params, searchParams }: Props) 
               <p className="text-xs mt-0.5">{punchesRequired - currentPunches} more to go</p>
             </div>
           )}
+
+          {/* Honest-points layer: the number that never resets. */}
+          <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between text-xs opacity-80">
+            <span>
+              Visit #{lifetimePunches.toLocaleString()} · {rankFor(lifetimePunches)}
+            </span>
+            <span>{moeMoney(lifetimePunches).toLocaleString()} Moe Money</span>
+          </div>
         </div>
 
         {/* QR code */}
