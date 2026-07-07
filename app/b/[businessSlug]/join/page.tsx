@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Smartphone, Phone, MapPin, CheckCircle2, Clock } from "lucide-react";
-import type { ScanResult, SignupResult } from "@/lib/types";
+import { Smartphone, Phone, MapPin, CheckCircle2, Clock, Ticket } from "lucide-react";
+import type { ScanResult, SignupResult, ClaimResult } from "@/lib/types";
 import { footerLine, rankUpLine } from "@/lib/loyalty-flavor";
+import { RIDE_REASSURANCE } from "@/lib/punch-bank";
 
 type PageState =
   | "checking"       // initial — localStorage check + GPS for returning customers
   | "checking_in"    // returning customer — calling checkin API
   | "punch_result"   // returning customer — showing punch result
+  | "ticket"         // cashed out — showing the timed staff ticket
   | "too_far"        // GPS rejected — too far from store
   | "location_required" // shop has a location but we got no GPS (denied/desktop)
   | "closed"         // overnight — punches paused
@@ -91,6 +93,13 @@ export default function JoinPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [punchResult, setPunchResult] = useState<ScanResult | null>(null);
   const [signupResult, setSignupResult] = useState<SignupResult | null>(null);
+
+  // Punch Bank cash-out state
+  const [ticket, setTicket] = useState<ClaimResult | null>(null);
+  const [claiming, setClaiming] = useState<string | null>(null); // rungId in flight
+  const [claimError, setClaimError] = useState("");
+  const [rode, setRode] = useState(false); // chose "let it ride" on the reward screen
+  const [nowTs, setNowTs] = useState<number>(() => Date.now());
 
   // Form state
   const [firstName, setFirstName] = useState("");
@@ -249,6 +258,41 @@ export default function JoinPage() {
     }
   }
 
+  // Cash out a banked reward at a chosen rung → mint the staff ticket.
+  async function handleCashOut(rungId: string) {
+    const token = getStoredToken(slug);
+    if (!token) return;
+    setClaimError("");
+    setClaiming(rungId);
+    try {
+      const res = await fetch("/api/rewards/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerToken: token, businessSlug: slug, rungId }),
+      });
+      const data = (await res.json()) as ClaimResult;
+      if (!res.ok || !data.ok) {
+        setClaimError(data.error ?? "Couldn't cash out. Try again.");
+        return;
+      }
+      setTicket(data);
+      setNowTs(Date.now());
+      setPageState("ticket");
+    } catch {
+      setClaimError("Network error. Try again.");
+    } finally {
+      setClaiming(null);
+    }
+  }
+
+  // Tick the clock once a second while the redemption ticket is on screen so the
+  // countdown stays live for the staff hand-off.
+  useEffect(() => {
+    if (pageState !== "ticket") return;
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [pageState]);
+
   // ─── Loading states ───────────────────────────────────────────────
 
   if (pageState === "checking" || pageState === "checking_in") {
@@ -325,6 +369,53 @@ export default function JoinPage() {
     );
   }
 
+  // ─── Redemption ticket (after cash-out) ───────────────────────────
+
+  if (pageState === "ticket" && ticket) {
+    const expiresMs = ticket.expiresAt ? new Date(ticket.expiresAt).getTime() : 0;
+    const remaining = Math.max(0, Math.floor((expiresMs - nowTs) / 1000));
+    const mm = Math.floor(remaining / 60);
+    const ss = String(remaining % 60).padStart(2, "0");
+    const expired = remaining <= 0;
+    const code = (ticket.ticketToken ?? "").toUpperCase();
+
+    return (
+      <div className="min-h-screen bg-indigo-600 flex flex-col items-center justify-center px-6 py-10 text-white">
+        <div className="w-full max-w-sm text-center">
+          <Ticket className="w-14 h-14 mx-auto mb-4 text-white/90" />
+          <p className="uppercase tracking-widest text-indigo-200 text-xs mb-2">
+            Show this to staff
+          </p>
+          <h1 className="text-3xl font-black mb-4">{ticket.rewardName}</h1>
+
+          <div className="bg-white rounded-2xl p-6 text-gray-900">
+            <p className="text-xs text-gray-500 mb-1">Ticket</p>
+            <p className="text-3xl font-black tracking-[0.3em] tabular-nums mb-4 uppercase">
+              {code}
+            </p>
+            {expired ? (
+              <p className="text-red-600 font-semibold">
+                Expired — scan the shop&apos;s QR again to pull your reward back up.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500">Valid for</p>
+                <p className="text-4xl font-black text-indigo-600 tabular-nums">
+                  {mm}:{ss}
+                </p>
+              </>
+            )}
+          </div>
+
+          <p className="text-indigo-100 text-sm mt-5">
+            {(ticket.balanceAfter ?? 0).toLocaleString()} punches still banked. Those
+            don&apos;t reset either.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // ─── Returning customer punch result ──────────────────────────────
 
   if (pageState === "punch_result" && punchResult) {
@@ -332,22 +423,112 @@ export default function JoinPage() {
     const isBlocked = punchResult.status === "blocked";
 
     if (isReward) {
-      return (
-        <div className="min-h-screen bg-amber-400 flex flex-col items-center justify-center px-6">
-          <div className="w-full max-w-sm text-center">
-            <div className="text-7xl mb-4 animate-bounce">🎉</div>
-            <h1 className="text-4xl font-black text-white mb-3 drop-shadow-lg">
-              REWARD EARNED!
-            </h1>
-            <p className="text-2xl text-amber-900 font-bold mb-2">
-              {punchResult.customerName}
-            </p>
-            <p className="text-white/90 text-lg mb-8">{punchResult.message}</p>
-            <div className="bg-white rounded-2xl p-5 shadow-xl">
-              <p className="text-sm font-semibold text-gray-700">
-                Show this screen to the cashier to claim your reward
+      const balance = punchResult.balance ?? punchResult.currentPunches;
+      const unlockedRungs = (punchResult.rungs ?? []).filter((r) => r.unlocked);
+      const next = punchResult.nextRung ?? null;
+      const crossed = punchResult.crossedRung ?? null;
+
+      // Chose "let it ride" — a calm "it's banked, relax" confirmation.
+      if (rode) {
+        return (
+          <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+            <div className="w-full max-w-sm text-center">
+              <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h1 className="text-3xl font-bold mb-2">Banked 🏦</h1>
+              <p className="text-gray-600 mb-6">
+                Your reward isn&apos;t going anywhere, {punchResult.customerName}. It&apos;ll
+                be waiting whenever you want it.
               </p>
+              <div className="bg-gray-50 rounded-2xl p-6">
+                <p className="text-sm text-gray-500">Balance</p>
+                <p className="text-4xl font-black text-indigo-600 tabular-nums">
+                  {balance.toLocaleString()}
+                </p>
+                {next && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    {next.toNext} more for {next.rewardName}.
+                  </p>
+                )}
+              </div>
+              <p className="text-sm text-gray-400 mt-6">{footerLine(balance)}</p>
             </div>
+          </div>
+        );
+      }
+
+      // Fallback: no rung data (pre-migration program) — keep the old claim-at-
+      // cashier screen so nothing breaks.
+      if (unlockedRungs.length === 0) {
+        return (
+          <div className="min-h-screen bg-amber-400 flex flex-col items-center justify-center px-6">
+            <div className="w-full max-w-sm text-center">
+              <div className="text-7xl mb-4 animate-bounce">🎉</div>
+              <h1 className="text-4xl font-black text-white mb-3 drop-shadow-lg">
+                REWARD EARNED!
+              </h1>
+              <p className="text-2xl text-amber-900 font-bold mb-2">
+                {punchResult.customerName}
+              </p>
+              <p className="text-white/90 text-lg mb-8">{punchResult.message}</p>
+              <div className="bg-white rounded-2xl p-5 shadow-xl">
+                <p className="text-sm font-semibold text-gray-700">
+                  Show this screen to the cashier to claim your reward
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // The Punch Bank choice: cash out any unlocked rung, or let it ride.
+      return (
+        <div className="min-h-screen bg-amber-400 flex flex-col items-center justify-center px-6 py-10">
+          <div className="w-full max-w-sm text-center">
+            <div className="text-6xl mb-3 animate-bounce">🎉</div>
+            <h1 className="text-3xl font-black text-white mb-1 drop-shadow">
+              {crossed ? `You unlocked ${crossed.rewardName}!` : "Reward banked!"}
+            </h1>
+            <p className="text-amber-900 font-bold mb-1">{punchResult.customerName}</p>
+            <p className="text-white/90 text-sm mb-6">
+              Balance: {balance.toLocaleString()} punches · never resets
+            </p>
+
+            <div className="bg-white rounded-2xl p-5 shadow-xl space-y-3">
+              <p className="text-sm font-semibold text-gray-700">
+                Cash out now — we&apos;ll show staff a ticket:
+              </p>
+              {unlockedRungs.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  disabled={claiming !== null}
+                  onClick={() => handleCashOut(r.id)}
+                  className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  {claiming === r.id ? "Cashing out…" : `Cash out — ${r.rewardName}`}
+                  <span className="block text-xs font-normal text-indigo-200">
+                    {r.cost} punches
+                  </span>
+                </button>
+              ))}
+              {claimError && <p className="text-sm text-red-600">{claimError}</p>}
+            </div>
+
+            {next && (
+              <div className="mt-5 bg-amber-500/30 rounded-2xl p-4">
+                <p className="text-white font-semibold">
+                  Or let it ride — {next.toNext} more for {next.rewardName}.
+                </p>
+                <p className="text-amber-950/80 text-xs mt-1">{RIDE_REASSURANCE}</p>
+                <button
+                  type="button"
+                  onClick={() => setRode(true)}
+                  className="mt-3 w-full bg-white/90 text-amber-900 py-2.5 rounded-xl font-semibold hover:bg-white transition-colors"
+                >
+                  Not now — keep banking
+                </button>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -368,13 +549,14 @@ export default function JoinPage() {
       );
     }
 
-    // Success
-    const pct = Math.min(
-      100,
-      (punchResult.currentPunches / punchResult.punchesRequired) * 100
-    );
-    const oneAway =
-      punchResult.currentPunches === punchResult.punchesRequired - 1;
+    // Success — speak in banked balance + progress toward the next rung.
+    const balance = punchResult.balance ?? punchResult.currentPunches;
+    const next = punchResult.nextRung ?? null;
+    const target = next?.cost ?? punchResult.punchesRequired;
+    const pct = Math.min(100, target > 0 ? (balance / target) * 100 : 0);
+    const oneAway = next
+      ? next.toNext === 1
+      : punchResult.currentPunches === punchResult.punchesRequired - 1;
     const lifetime = punchResult.lifetimePunches ?? null;
     const leveledUp = punchResult.rankJustEarned ?? null;
 
@@ -413,9 +595,11 @@ export default function JoinPage() {
 
           <div className="bg-gray-50 rounded-2xl p-6 mb-4">
             <div className="flex justify-between text-sm text-gray-500 mb-2">
-              <span>Your card</span>
+              <span>{next ? `Toward ${next.rewardName}` : "Balance"}</span>
               <span className="font-bold text-gray-900">
-                {punchResult.currentPunches} / {punchResult.punchesRequired}
+                {next
+                  ? `${balance.toLocaleString()} / ${next.cost}`
+                  : `${balance.toLocaleString()} banked`}
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
@@ -426,7 +610,7 @@ export default function JoinPage() {
             </div>
             {oneAway && (
               <p className="text-sm text-amber-600 font-semibold mt-3">
-                ⚡ One more visit earns your reward!
+                ⚡ One more visit{next ? ` unlocks ${next.rewardName}` : " earns your reward"}!
               </p>
             )}
             {lifetime != null && (
