@@ -14,6 +14,7 @@
  */
 
 import { createSign } from "crypto";
+import { moeMoney, rankFor, PASS_MANIFESTO, MOE_MONEY_RATE_LINE } from "@/lib/loyalty-flavor";
 
 interface GoogleWalletOptions {
   token: string;
@@ -23,6 +24,7 @@ interface GoogleWalletOptions {
   brandColor: string;
   logoUrl?: string | null;
   currentPunches: number;
+  lifetimePunches?: number;
   punchesRequired: number;
   rewardName: string;
   appUrl: string;
@@ -41,6 +43,7 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
     brandColor,
     logoUrl,
     currentPunches,
+    lifetimePunches,
     punchesRequired,
     rewardName,
     appUrl,
@@ -48,6 +51,8 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
     longitude,
     locations,
   } = opts;
+
+  const lifetime = lifetimePunches ?? currentPunches;
 
   const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID!;
   const classId = process.env.GOOGLE_WALLET_CLASS_ID ?? `${issuerId}.punchless_loyalty`;
@@ -103,9 +108,19 @@ export async function generateGoogleWalletUrl(opts: GoogleWalletOptions): Promis
         id: "status",
       },
       {
-        header: "Business",
-        body: businessName,
-        id: "business",
+        header: "Moe Money",
+        body: `${moeMoney(lifetime).toLocaleString()} — ${MOE_MONEY_RATE_LINE}`,
+        id: "moemoney",
+      },
+      {
+        header: "Career Punches",
+        body: `${lifetime.toLocaleString()} · ${rankFor(lifetime)}. These never reset. Cards reset. You don't.`,
+        id: "career",
+      },
+      {
+        header: "The Unfine Print",
+        body: PASS_MANIFESTO.join(" "),
+        id: "manifesto",
       },
     ],
     infoModuleData: {

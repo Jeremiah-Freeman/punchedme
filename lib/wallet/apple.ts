@@ -19,6 +19,7 @@
 
 import { createHash } from "crypto";
 import { randomBytes } from "crypto";
+import { moeMoney, rankFor, PASS_MANIFESTO, MOE_MONEY_RATE_LINE } from "@/lib/loyalty-flavor";
 // Static import — dynamically importing "stream" yields the wrong shape in the
 // minified Vercel serverless bundle ("E is not a constructor" on new Writable()).
 import { Writable } from "stream";
@@ -31,6 +32,7 @@ interface ApplePassOptions {
   brandColor: string;
   logoUrl?: string | null;
   currentPunches: number;
+  lifetimePunches?: number;
   punchesRequired: number;
   rewardName: string;
   appUrl: string;
@@ -148,6 +150,7 @@ function buildPassJson(opts: ApplePassOptions) {
     businessName,
     brandColor,
     currentPunches,
+    lifetimePunches,
     punchesRequired,
     rewardName,
     appUrl,
@@ -162,6 +165,7 @@ function buildPassJson(opts: ApplePassOptions) {
 
   const punchesLeft = punchesRequired - currentPunches;
   const rewardReady = currentPunches >= punchesRequired;
+  const lifetime = lifetimePunches ?? currentPunches;
 
   // Lock screen notification message — shown when customer arrives at the store
   const relevantText = rewardReady
@@ -233,9 +237,14 @@ function buildPassJson(opts: ApplePassOptions) {
       ],
       auxiliaryFields: [
         {
-          key: "business",
-          label: "Business",
-          value: businessName,
+          key: "moemoney",
+          label: "MOE MONEY",
+          value: moeMoney(lifetime).toLocaleString(),
+        },
+        {
+          key: "standing",
+          label: "STANDING",
+          value: rankFor(lifetime),
         },
       ],
       backFields: [
@@ -245,9 +254,24 @@ function buildPassJson(opts: ApplePassOptions) {
           value: rewardName,
         },
         {
+          key: "career",
+          label: "Career Punches",
+          value: `${lifetime.toLocaleString()}. These never reset. Cards reset. You don't.`,
+        },
+        {
+          key: "moemoney_rate",
+          label: "Moe Money",
+          value: MOE_MONEY_RATE_LINE,
+        },
+        {
           key: "terms",
           label: "How It Works",
           value: `Earn 1 punch per visit. Redeem after ${punchesRequired} visits. Punches roll over after redemption.`,
+        },
+        {
+          key: "manifesto",
+          label: "The Unfine Print",
+          value: PASS_MANIFESTO.join("\n"),
         },
         {
           key: "support",

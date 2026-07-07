@@ -46,7 +46,7 @@ export async function GET(
 
   const { data: account } = await db
     .from("loyalty_accounts")
-    .select("current_punches")
+    .select("current_punches, lifetime_punches")
     .eq("customer_id", customer.id)
     .single();
 
@@ -87,6 +87,7 @@ export async function GET(
     brandColor: biz?.brand_color ?? "#6366f1",
     logoUrl: biz?.logo_url ?? null,
     currentPunches: account?.current_punches ?? 0,
+    lifetimePunches: account?.lifetime_punches ?? 0,
     punchesRequired: program?.punches_required ?? 10,
     rewardName: program?.reward_name ?? "Reward",
     appUrl: base,

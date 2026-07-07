@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Smartphone, Phone, MapPin, CheckCircle2, Clock } from "lucide-react";
 import type { ScanResult, SignupResult } from "@/lib/types";
+import { footerLine, rankUpLine } from "@/lib/loyalty-flavor";
 
 type PageState =
   | "checking"       // initial — localStorage check + GPS for returning customers
@@ -374,19 +375,45 @@ export default function JoinPage() {
     );
     const oneAway =
       punchResult.currentPunches === punchResult.punchesRequired - 1;
+    const lifetime = punchResult.lifetimePunches ?? null;
+    const leveledUp = punchResult.rankJustEarned ?? null;
 
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
           <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-3xl font-bold mb-1">Punched in!</h1>
-          <p className="text-gray-500 mb-8">
+          <p className="text-gray-500 mb-6">
             Welcome back, {punchResult.customerName} 👋
           </p>
 
+          {/* Moe Money — the same punch, with a couple zeros stapled on, and we
+              say so. */}
+          {punchResult.moeMoney != null && (
+            <div className="mb-6">
+              <p className="text-4xl font-black text-indigo-600 tabular-nums">
+                +{(100).toLocaleString()} Moe Money
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                That&apos;s one punch. Big numbers just feel nice. We checked.
+              </p>
+            </div>
+          )}
+
+          {/* Rank-up gets its own beat when you cross a threshold. */}
+          {leveledUp && (
+            <div className="bg-indigo-600 text-white rounded-2xl p-5 mb-4">
+              <p className="text-xs uppercase tracking-wide text-indigo-200 mb-1">
+                New status
+              </p>
+              <p className="text-2xl font-black mb-1">{leveledUp}</p>
+              <p className="text-sm text-indigo-100">{rankUpLine(leveledUp)}</p>
+            </div>
+          )}
+
           <div className="bg-gray-50 rounded-2xl p-6 mb-4">
             <div className="flex justify-between text-sm text-gray-500 mb-2">
-              <span>Your visits</span>
+              <span>Your card</span>
               <span className="font-bold text-gray-900">
                 {punchResult.currentPunches} / {punchResult.punchesRequired}
               </span>
@@ -402,9 +429,18 @@ export default function JoinPage() {
                 ⚡ One more visit earns your reward!
               </p>
             )}
+            {lifetime != null && (
+              <p className="text-xs text-gray-400 mt-3">
+                Visit #{lifetime.toLocaleString()}
+                {punchResult.rank ? ` · ${punchResult.rank}` : ""} · these never
+                reset
+              </p>
+            )}
           </div>
 
-          <p className="text-sm text-gray-400">See you next time!</p>
+          <p className="text-sm text-gray-400">
+            {footerLine(lifetime ?? punchResult.currentPunches)}
+          </p>
         </div>
       </div>
     );

@@ -99,6 +99,12 @@ export interface ScanResult {
   customerId?: string;
   programId?: string;
   cooldownMinutesRemaining?: number;
+  // "Honest points" layer — lifetime visits (never resets), the rank it earns,
+  // and Moe Money (lifetime × 100). Optional so older/other scan paths still type.
+  lifetimePunches?: number;
+  rank?: string;
+  rankJustEarned?: string | null;
+  moeMoney?: number;
 }
 
 export interface SignupResult {
