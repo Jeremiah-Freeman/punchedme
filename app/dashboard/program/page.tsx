@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Gift, Hash, ToggleLeft, ToggleRight, Clock } from "lucide-react";
+import { Gift, Hash, ToggleLeft, ToggleRight, Clock, Plus, X } from "lucide-react";
 
 interface Program {
   id: string;
@@ -10,6 +10,11 @@ interface Program {
   punches_required: number;
   punch_cooldown_minutes: number;
   is_active: boolean;
+}
+
+interface RungRow {
+  cost: number;
+  rewardName: string;
 }
 
 export default function ProgramPage() {
@@ -27,6 +32,12 @@ export default function ProgramPage() {
   const [cooldownMinutes, setCooldownMinutes] = useState(1440);
   const [isActive, setIsActive] = useState(true);
 
+  // Reward menu (rungs)
+  const [rungs, setRungs] = useState<RungRow[]>([]);
+  const [rungsSaving, setRungsSaving] = useState(false);
+  const [rungsSaved, setRungsSaved] = useState(false);
+  const [rungsError, setRungsError] = useState("");
+
   useEffect(() => {
     async function load() {
       const res = await fetch("/api/business/me");
@@ -41,12 +52,74 @@ export default function ProgramPage() {
           setPunchesRequired(p.punches_required);
           setCooldownMinutes(p.punch_cooldown_minutes ?? 1440);
           setIsActive(p.is_active);
+
+          // Load the reward menu for this program.
+          try {
+            const rr = await fetch(`/api/business/rungs?programId=${p.id}`);
+            if (rr.ok) {
+              const rd = await rr.json();
+              const rows = (rd.rungs ?? []).map(
+                (r: { cost: number; reward_name: string }) => ({
+                  cost: r.cost,
+                  rewardName: r.reward_name,
+                })
+              );
+              setRungs(
+                rows.length
+                  ? rows
+                  : [{ cost: p.punches_required, rewardName: p.reward_name }]
+              );
+            }
+          } catch {
+            // Non-fatal — the editor just starts from the base reward.
+          }
         }
       }
       setLoading(false);
     }
     load();
   }, []);
+
+  function updateRung(i: number, patch: Partial<RungRow>) {
+    setRungs((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  }
+  function addRung() {
+    setRungs((prev) => (prev.length >= 3 ? prev : [...prev, { cost: 0, rewardName: "" }]));
+  }
+  function removeRung(i: number) {
+    setRungs((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function saveRungs() {
+    if (!program) return;
+    setRungsError("");
+    setRungsSaving(true);
+    try {
+      const res = await fetch("/api/business/rungs", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ programId: program.id, rungs }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRungsError(data.error ?? "Couldn't save your reward menu.");
+        return;
+      }
+      const rows = (data.rungs ?? []).map(
+        (r: { cost: number; reward_name: string }) => ({
+          cost: r.cost,
+          rewardName: r.reward_name,
+        })
+      );
+      if (rows.length) setRungs(rows);
+      setRungsSaved(true);
+      setTimeout(() => setRungsSaved(false), 2000);
+    } catch {
+      setRungsError("Network error. Try again.");
+    } finally {
+      setRungsSaving(false);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -206,6 +279,77 @@ export default function ProgramPage() {
           {saving ? "Saving…" : saved ? "Saved ✓" : program ? "Save changes" : "Create program"}
         </button>
       </form>
+
+      {program && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm mt-6">
+          <h2 className="text-lg font-bold mb-1">What can your regulars earn?</h2>
+          <p className="text-gray-500 text-sm mb-5">
+            A short menu of rewards. Bigger rewards cost more punches. Regulars can
+            claim any reward they&apos;ve reached — or keep saving toward a bigger
+            one. Punches never reset.
+          </p>
+
+          <div className="space-y-3">
+            {rungs.map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={r.rewardName}
+                  onChange={(e) => updateRung(i, { rewardName: e.target.value })}
+                  placeholder={i === 0 ? "Free cookie" : "Free drink"}
+                  className="flex-1 min-w-0 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <input
+                    type="number"
+                    value={r.cost || ""}
+                    onChange={(e) => updateRung(i, { cost: Number(e.target.value) })}
+                    min={1}
+                    max={200}
+                    className="w-20 border border-gray-300 rounded-xl px-3 py-3 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <span className="text-xs text-gray-500">punches</span>
+                </div>
+                {rungs.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeRung(i)}
+                    aria-label="Remove reward"
+                    className="text-gray-400 hover:text-red-500 shrink-0"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {rungs.length < 3 && (
+            <button
+              type="button"
+              onClick={addRung}
+              className="flex items-center gap-1.5 text-indigo-600 text-sm font-semibold mt-3 hover:text-indigo-700"
+            >
+              <Plus className="w-4 h-4" /> Add a reward
+            </button>
+          )}
+
+          {rungsError && (
+            <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl mt-4">
+              {rungsError}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={saveRungs}
+            disabled={rungsSaving}
+            className="w-full bg-gray-900 text-white py-3 rounded-xl text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 transition-colors mt-4"
+          >
+            {rungsSaving ? "Saving…" : rungsSaved ? "Saved ✓" : "Save reward menu"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

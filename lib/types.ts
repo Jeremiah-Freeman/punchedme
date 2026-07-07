@@ -88,6 +88,36 @@ export interface WalletPass {
   created_at: string;
 }
 
+// A configured reward rung (DB row shape, snake_case).
+export interface RewardRung {
+  id: string;
+  program_id: string;
+  cost: number;
+  reward_name: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RedemptionStatus = "pending" | "redeemed" | "voided";
+
+export interface RewardRedemption {
+  id: string;
+  business_id: string;
+  customer_id: string;
+  program_id: string;
+  account_id: string;
+  rung_id: string | null;
+  reward_name: string;
+  cost: number;
+  balance_after: number;
+  status: RedemptionStatus;
+  ticket_token: string;
+  expires_at: string;
+  redeemed_at: string | null;
+  created_at: string;
+}
+
 // API response types
 export interface ScanResult {
   status: "success" | "reward_available" | "blocked" | "invalid" | "already_redeemed";
@@ -105,6 +135,24 @@ export interface ScanResult {
   rank?: string;
   rankJustEarned?: string | null;
   moeMoney?: number;
+  // Punch Bank layer — the banked balance and the owner's reward menu. Balance is
+  // the same number as currentPunches (never resets); rungs are the cash-out choices.
+  // Optional so other scan paths (staff/kiosk) that don't compute the bank still type.
+  balance?: number;
+  rungs?: { id: string; cost: number; rewardName: string; unlocked: boolean }[];
+  crossedRung?: { id: string; cost: number; rewardName: string } | null;
+  nextRung?: { id: string; cost: number; rewardName: string; toNext: number } | null;
+}
+
+// Customer cash-out → a timed ticket the staff honors.
+export interface ClaimResult {
+  ok: boolean;
+  error?: string;
+  ticketToken?: string;
+  rewardName?: string;
+  cost?: number;
+  balanceAfter?: number;
+  expiresAt?: string;
 }
 
 export interface SignupResult {

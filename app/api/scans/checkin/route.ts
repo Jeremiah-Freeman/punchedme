@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBusinessCoords } from "@/lib/locations";
 import { moeMoney, rankFor, rankJustEarned } from "@/lib/loyalty-flavor";
+import { computeBank, crossedRung as crossedRungOf } from "@/lib/punch-bank";
 import type { ScanResult } from "@/lib/types";
 
 const GEO_RADIUS_M = 100;
@@ -192,21 +193,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Account error" }, { status: 500 });
     }
 
-    // Reward already waiting
-    if (account.current_punches >= program.punches_required) {
-      return NextResponse.json<ScanResult>({
-        status: "reward_available",
-        customerName: customer.first_name,
-        currentPunches: account.current_punches,
-        punchesRequired: program.punches_required,
-        rewardAvailable: true,
-        message: `You've earned your ${program.reward_name}! Show this screen to claim it.`,
-        customerId: customer.id,
-        programId: program.id,
-      });
-    }
+    // Punch Bank — load the owner's reward menu (seeded so every program has ≥1 rung).
+    const { data: rungRows } = await db
+      .from("reward_rungs")
+      .select("id, cost, reward_name")
+      .eq("program_id", program.id)
+      .order("cost", { ascending: true });
+    const rungs = (rungRows ?? []).map((r) => ({
+      id: r.id as string,
+      cost: r.cost as number,
+      rewardName: r.reward_name as string,
+    }));
+    // Lowest rung cost = the point a reward first becomes claimable.
+    const minCost = rungs.length ? rungs[0].cost : program.punches_required;
 
-    // Cooldown check
+    // Pack the banked-balance view (rung unlock states, next rung, what just crossed).
+    const bankFields = (balance: number, prev?: number) => {
+      const bank = computeBank(balance, rungs);
+      const crossed = prev !== undefined ? crossedRungOf(prev, balance, rungs) : null;
+      return {
+        balance,
+        rungs: bank.rungs,
+        nextRung: bank.nextRung,
+        crossedRung: crossed
+          ? { id: crossed.id, cost: crossed.cost, rewardName: crossed.rewardName }
+          : null,
+      };
+    };
+
+    // Cooldown check — even when blocked from adding a punch, surface the banked
+    // balance so someone with a reward waiting can still cash out (unlocked rungs
+    // are claimable forever; silence keeps them banked).
     if (program.punch_cooldown_minutes > 0) {
       const { data: lastPunch } = await db
         .from("scan_events")
@@ -223,29 +240,37 @@ export async function POST(request: NextRequest) {
         const cooldownMs = program.punch_cooldown_minutes * 60 * 1000;
         if (elapsed < cooldownMs) {
           const minutesRemaining = Math.ceil((cooldownMs - elapsed) / 60000);
+          const rewardWaiting = account.current_punches >= minCost;
           return NextResponse.json<ScanResult>({
-            status: "blocked",
+            status: rewardWaiting ? "reward_available" : "blocked",
             customerName: customer.first_name,
             currentPunches: account.current_punches,
             punchesRequired: program.punches_required,
-            rewardAvailable: false,
-            message: `Already punched today! Come back in ${formatRemaining(minutesRemaining)}.`,
+            rewardAvailable: rewardWaiting,
+            message: rewardWaiting
+              ? "You've already punched in today — but you've got a reward banked. Cash out or let it ride."
+              : `Already punched today! Come back in ${formatRemaining(minutesRemaining)}.`,
+            customerId: customer.id,
+            programId: program.id,
+            ...bankFields(account.current_punches),
           });
         }
       }
     }
 
-    // Add punch
+    // Add punch — the Punch Bank always banks the visit. There is no cap at a
+    // reward: that's the whole point of "let it ride." Balance grows; a redemption
+    // subtracts. rewards_earned ticks only when this visit crosses a new rung.
     const newPunches = account.current_punches + 1;
     const newLifetime = account.lifetime_punches + 1;
-    const rewardEarned = newPunches >= program.punches_required;
+    const crossed = crossedRungOf(account.current_punches, newPunches, rungs);
 
     await db
       .from("loyalty_accounts")
       .update({
         current_punches: newPunches,
         lifetime_punches: newLifetime,
-        ...(rewardEarned ? { rewards_earned: account.rewards_earned + 1 } : {}),
+        ...(crossed ? { rewards_earned: account.rewards_earned + 1 } : {}),
       })
       .eq("id", account.id);
 
@@ -253,7 +278,7 @@ export async function POST(request: NextRequest) {
       business_id: business.id,
       customer_id: customer.id,
       program_id: program.id,
-      event_type: rewardEarned ? "reward_earned" : "punch_added",
+      event_type: crossed ? "reward_earned" : "punch_added",
       punches_delta: 1,
       metadata: {
         previous_punches: account.current_punches,
@@ -270,30 +295,23 @@ export async function POST(request: NextRequest) {
       moeMoney: moeMoney(newLifetime),
     };
 
-    if (rewardEarned) {
-      return NextResponse.json<ScanResult>({
-        status: "reward_available",
-        customerName: customer.first_name,
-        currentPunches: newPunches,
-        punchesRequired: program.punches_required,
-        rewardAvailable: true,
-        message: `You earned your ${program.reward_name}! Show this screen to claim it.`,
-        customerId: customer.id,
-        programId: program.id,
-        ...honest,
-      });
-    }
+    const rewardAvailable = newPunches >= minCost;
 
     return NextResponse.json<ScanResult>({
-      status: "success",
+      status: rewardAvailable ? "reward_available" : "success",
       customerName: customer.first_name,
       currentPunches: newPunches,
       punchesRequired: program.punches_required,
-      rewardAvailable: false,
-      message: `Punch added! ${newPunches} of ${program.punches_required} visits.`,
+      rewardAvailable,
+      message: crossed
+        ? `You just unlocked ${crossed.rewardName}! Cash out or let it ride.`
+        : rewardAvailable
+        ? `Punch added — you're at ${newPunches}, with a reward banked.`
+        : `Punch added — you're at ${newPunches}.`,
       customerId: customer.id,
       programId: program.id,
       ...honest,
+      ...bankFields(newPunches, account.current_punches),
     });
   } catch (err) {
     console.error("Checkin error:", err);
