@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, slugify, appUrl } from "@/lib/utils";
 import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import { PLAN_CAPS } from "@/lib/stripe";
+import { TEST_MODE } from "@/lib/test-mode";
 import { randomBytes } from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -25,14 +26,21 @@ export async function POST(request: NextRequest) {
 
     // Rate limit by IP — stops scripted mass-joins and phone enumeration. A real
     // shop counter sees a handful of joins a minute; 20 is generous headroom.
-    if (!(await checkRateLimit(db, `signup:${clientIp(request)}`, 20, 60))) {
+    // (Skipped in test mode so you can loop onboarding without tripping it.)
+    if (!TEST_MODE && !(await checkRateLimit(db, `signup:${clientIp(request)}`, 20, 60))) {
       return NextResponse.json(
         { error: "Too many attempts. Please wait a minute and try again." },
         { status: 429 }
       );
     }
 
-    const normalizedPhone = normalizePhone(phoneNumber);
+    // In test mode every signup is a brand-new customer: uniquify the stored
+    // normalized_phone so the (business, phone) constraint never collapses your
+    // repeat runs into "existing customer." You still type your real number; the
+    // realism holds, but each run is a fresh QR→signup.
+    const normalizedPhone = TEST_MODE
+      ? `${normalizePhone(phoneNumber)}+t${randomBytes(4).toString("hex")}`
+      : normalizePhone(phoneNumber);
 
     // Validate phone — must be 10 or 11 digits after stripping non-numeric
     const digits = phoneNumber.replace(/\D/g, "");
@@ -94,7 +102,7 @@ export async function POST(request: NextRequest) {
         .from("customers")
         .select("id", { count: "exact", head: true })
         .eq("business_id", business.id);
-      if ((memberCount ?? 0) >= cap) {
+      if (!TEST_MODE && (memberCount ?? 0) >= cap) {
         return NextResponse.json(
           {
             error: `${business.name} isn't accepting new members right now. Check back soon!`,

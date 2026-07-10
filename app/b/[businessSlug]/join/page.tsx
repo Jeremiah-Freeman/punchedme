@@ -6,6 +6,7 @@ import { Smartphone, Phone, MapPin, CheckCircle2, Clock, Ticket } from "lucide-r
 import type { ScanResult, SignupResult, ClaimResult } from "@/lib/types";
 import { footerLine, rankUpLine } from "@/lib/loyalty-flavor";
 import { RIDE_REASSURANCE } from "@/lib/punch-bank";
+import { TEST_MODE } from "@/lib/test-mode";
 
 type PageState =
   | "checking"       // initial — localStorage check + GPS for returning customers
@@ -293,6 +294,46 @@ export default function JoinPage() {
     return () => clearInterval(id);
   }, [pageState]);
 
+  // ── Sandbox controls (test mode only) ──────────────────────────────
+  // Wipe the local token and drop back to a fresh signup — the "new person sees
+  // the QR" flow, on demand, no incognito needed.
+  function startOver() {
+    try { localStorage.removeItem(`punchedme_token_${slug}`); } catch {}
+    setPunchResult(null);
+    setSignupResult(null);
+    setTicket(null);
+    setRode(false);
+    setClaimError("");
+    setFirstName("");
+    setPhone("");
+    setPageState("signup");
+  }
+  // Wipe this shop's test customers on the server, then start fresh.
+  async function resetShopData() {
+    try {
+      await fetch("/api/test/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessSlug: slug }),
+      });
+    } catch {}
+    startOver();
+  }
+  const testBar = TEST_MODE ? (
+    <div
+      style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50 }}
+      className="bg-fuchsia-600 text-white text-xs flex items-center justify-center gap-4 py-1.5 px-3"
+    >
+      <span className="font-bold">🧪 TEST MODE</span>
+      <button type="button" onClick={startOver} className="underline">
+        Start over (new customer)
+      </button>
+      <button type="button" onClick={resetShopData} className="underline">
+        Reset shop data
+      </button>
+    </div>
+  ) : null;
+
   // ─── Loading states ───────────────────────────────────────────────
 
   if (pageState === "checking" || pageState === "checking_in") {
@@ -382,6 +423,7 @@ export default function JoinPage() {
     return (
       <div className="min-h-screen bg-indigo-600 flex flex-col items-center justify-center px-6 py-10 text-white">
         <div className="w-full max-w-sm text-center">
+          {testBar}
           <Ticket className="w-14 h-14 mx-auto mb-4 text-white/90" />
           <p className="uppercase tracking-widest text-indigo-200 text-xs mb-2">
             Show this to staff
@@ -433,7 +475,8 @@ export default function JoinPage() {
         return (
           <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
             <div className="w-full max-w-sm text-center">
-              <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              {testBar}
+          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h1 className="text-3xl font-bold mb-2">Banked 🏦</h1>
               <p className="text-gray-600 mb-6">
                 Your reward isn&apos;t going anywhere, {punchResult.customerName}. It&apos;ll
@@ -484,6 +527,7 @@ export default function JoinPage() {
       return (
         <div className="min-h-screen bg-amber-400 flex flex-col items-center justify-center px-6 py-10">
           <div className="w-full max-w-sm text-center">
+            {testBar}
             <div className="text-6xl mb-3 animate-bounce">🎉</div>
             <h1 className="text-3xl font-black text-white mb-1 drop-shadow">
               {crossed ? `You unlocked ${crossed.rewardName}!` : "Reward banked!"}
@@ -563,6 +607,7 @@ export default function JoinPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
+          {testBar}
           <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-3xl font-bold mb-1">Punched in!</h1>
           <p className="text-gray-500 mb-6">
@@ -636,6 +681,7 @@ export default function JoinPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm text-center">
+          {testBar}
           <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">
             You&apos;re in! 🎉
@@ -688,6 +734,7 @@ export default function JoinPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
+        {testBar}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             {logoUrl ? (

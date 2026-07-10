@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getBusinessCoords } from "@/lib/locations";
 import { moeMoney, rankFor, rankJustEarned } from "@/lib/loyalty-flavor";
 import { computeBank, crossedRung as crossedRungOf } from "@/lib/punch-bank";
+import { TEST_MODE } from "@/lib/test-mode";
 import type { ScanResult } from "@/lib/types";
 
 const GEO_RADIUS_M = 100;
@@ -81,9 +82,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Business not found" }, { status: 404 });
     }
 
-    // Open-hours guard — no overnight self-scan punches.
+    // Open-hours guard — no overnight self-scan punches. (Skipped in test mode.)
     const hour = localHour(business.timezone ?? "America/Los_Angeles");
-    if (hour !== null && hour >= OVERNIGHT_BLOCK_START && hour < OVERNIGHT_BLOCK_END) {
+    if (!TEST_MODE && hour !== null && hour >= OVERNIGHT_BLOCK_START && hour < OVERNIGHT_BLOCK_END) {
       return NextResponse.json(
         {
           status: "closed",
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     // Now: location configured ⇒ location required AND within radius. Shops that
     // never set a location (no coords) are unenforced, as before.
     const storeCoords = await getBusinessCoords(db, business.id, business);
-    if (storeCoords.length > 0) {
+    if (!TEST_MODE && storeCoords.length > 0) {
       if (latitude === null || longitude === null) {
         return NextResponse.json(
           {
@@ -223,8 +224,9 @@ export async function POST(request: NextRequest) {
 
     // Cooldown check — even when blocked from adding a punch, surface the banked
     // balance so someone with a reward waiting can still cash out (unlocked rungs
-    // are claimable forever; silence keeps them banked).
-    if (program.punch_cooldown_minutes > 0) {
+    // are claimable forever; silence keeps them banked). Skipped in test mode so
+    // you can punch on repeat.
+    if (!TEST_MODE && program.punch_cooldown_minutes > 0) {
       const { data: lastPunch } = await db
         .from("scan_events")
         .select("created_at")
