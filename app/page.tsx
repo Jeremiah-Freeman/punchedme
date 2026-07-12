@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import RecoveryRedirect from "./RecoveryRedirect";
 import ScrollReset from "./ScrollReset";
+import SnapPager from "./SnapPager";
 import HeroSignupForm from "./HeroSignupForm";
 
 // Build a responsive font-size, optionally scaled. Uses container query units
@@ -189,6 +190,7 @@ export default function LandingPage() {
       `}</style>
       <RecoveryRedirect />
       <ScrollReset />
+      <SnapPager />
       <main className="snapscroll">
 
       {/* 1 — Nav (logo + log in) pinned up top, Moe banner centered below it */}
