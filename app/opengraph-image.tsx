@@ -15,7 +15,10 @@ export default function Image() {
   // serverless function doesn't bundle public/*, so the top-level read throws
   // ENOENT and 500s the page. Only the OG-image function actually runs Image(),
   // and that function does have the file.
-  const hero = readFileSync(join(process.cwd(), "public/do-you-have-your-punch-card.png"));
+  // Use the trimmed banner: its background is pure white (#ffffff). The older
+  // do-you-have-your-punch-card.png has an off-white (252,250,251) background that
+  // read as a gray tile in link unfurls (iMessage etc.) against the white card.
+  const hero = readFileSync(join(process.cwd(), "public/do-you-trimmed.png"));
   const heroSrc = `data:image/png;base64,${hero.toString("base64")}`;
 
   return new ImageResponse(
@@ -31,7 +34,9 @@ export default function Image() {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={heroSrc} width={1008} height={806} alt="Do you have your punch card?" style={{ objectFit: "contain" }} />
+        {/* Sized to the trimmed banner's 1524×558 ratio so it sits centered with
+            even, pure-white margins on all sides of the 1200×630 card. */}
+        <img src={heroSrc} width={1080} height={396} alt="Do you have your punch card?" style={{ objectFit: "contain" }} />
       </div>
     ),
     { ...size }
