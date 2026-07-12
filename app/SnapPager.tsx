@@ -25,35 +25,51 @@ export default function SnapPager() {
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    const ANIM = reduce ? 100 : 560; // glide duration before the section is "settled"
+    const IDLE = 180; // ms of wheel silence required before a new gesture counts
+
     let locked = false;
-    let timer: number | undefined;
+    let animDone = false;
+    let animTimer: number | undefined;
+    let idleTimer: number | undefined;
 
     const sections = () =>
       Array.from(container.querySelectorAll<HTMLElement>(".snap"));
     const currentIndex = () =>
       Math.round(container.scrollTop / (container.clientHeight || 1));
 
+    const unlock = () => {
+      container.style.scrollSnapType = ""; // back to the stylesheet's mandatory
+      locked = false;
+    };
+    // Re-arm the idle countdown. Only unlocks once the glide has finished AND the
+    // wheel has been quiet for IDLE ms — so a single hard flick (one long momentum
+    // tail) advances exactly one section instead of two.
+    const armIdle = () => {
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => {
+        if (animDone) unlock();
+        else armIdle();
+      }, IDLE);
+    };
+
     const goTo = (i: number) => {
       const list = sections();
       const target = list[Math.max(0, Math.min(list.length - 1, i))];
       if (!target) return;
       locked = true;
-      // Relax mandatory snap so it doesn't fight the programmatic glide mid-flight;
-      // always restore to "" (the stylesheet's mandatory) via the timer so it can
-      // never get stuck disabled.
+      animDone = false;
+      // Relax mandatory snap so it doesn't fight the programmatic glide mid-flight.
       container.style.scrollSnapType = "none";
       target.scrollIntoView({
         behavior: reduce ? "auto" : "smooth",
         block: "start",
       });
-      window.clearTimeout(timer);
-      timer = window.setTimeout(
-        () => {
-          container.style.scrollSnapType = "";
-          locked = false;
-        },
-        reduce ? 100 : 620
-      );
+      window.clearTimeout(animTimer);
+      animTimer = window.setTimeout(() => {
+        animDone = true;
+        armIdle();
+      }, ANIM);
     };
 
     const THRESHOLD = 8; // px of vertical intent before we take over
@@ -61,6 +77,7 @@ export default function SnapPager() {
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // ignore horizontal
       if (locked) {
         e.preventDefault(); // swallow momentum so it can't overshoot the section
+        armIdle(); // every event pushes the unlock further out
         return;
       }
       if (Math.abs(e.deltaY) < THRESHOLD) return; // tiny nudge — let it be
@@ -71,7 +88,8 @@ export default function SnapPager() {
     container.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       container.removeEventListener("wheel", onWheel);
-      window.clearTimeout(timer);
+      window.clearTimeout(animTimer);
+      window.clearTimeout(idleTimer);
       container.style.scrollSnapType = "";
     };
   }, []);
