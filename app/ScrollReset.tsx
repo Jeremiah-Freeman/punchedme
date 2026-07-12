@@ -20,16 +20,24 @@ export default function ScrollReset() {
     if (typeof window === "undefined") return;
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
-    const root = document.documentElement;
     const toTop = () => {
       if (window.location.hash) return; // respect deep-links to an anchor
-      const prev = root.style.scrollSnapType;
-      root.style.scrollSnapType = "none";
+      // The scroller is the .snapscroll container (falls back to the root for
+      // safety). Momentarily disable snap so the jump-to-top isn't re-snapped
+      // back to the last section, then restore the stylesheet's mandatory.
+      const el =
+        (document.querySelector(".snapscroll") as HTMLElement | null) ??
+        document.documentElement;
+      // Disable snap, jump to top, force a synchronous reflow so the position
+      // sticks, then re-enable snap immediately. Done synchronously (no rAF) on
+      // purpose: rAF callbacks are paused in backgrounded tabs, and a deferred
+      // re-enable could leave snap disabled for good. scrollTop 0 is itself a
+      // snap boundary, so re-enabling right away won't jump the view.
+      el.style.scrollSnapType = "none";
+      el.scrollTop = 0;
       window.scrollTo(0, 0);
-      requestAnimationFrame(() => {
-        window.scrollTo(0, 0);
-        root.style.scrollSnapType = prev; // back to the stylesheet's mandatory
-      });
+      void el.offsetHeight; // force reflow
+      el.style.scrollSnapType = "";
     };
 
     toTop();
