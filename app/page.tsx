@@ -164,7 +164,17 @@ export default function LandingPage() {
     <div className="bg-white">
       {/* Full-viewport scroll snap: each section stands alone, one per screen. */}
       <style>{`
-        html { scroll-snap-type: y mandatory; }
+        html, body { height: 100%; margin: 0; }
+        /* A dedicated scroll container snaps reliably on desktop AND mobile.
+           Declaring snap on the root <html> propagated to the viewport and only
+           actually engaged on touch devices — desktop mouse/trackpad ignored it. */
+        .snapscroll {
+          height: 100vh;
+          height: 100svh;
+          overflow-y: scroll;
+          scroll-snap-type: y mandatory;
+          -webkit-overflow-scrolling: touch;
+        }
         .snap {
           min-height: 100vh;
           min-height: 100svh;
@@ -179,6 +189,7 @@ export default function LandingPage() {
       `}</style>
       <RecoveryRedirect />
       <ScrollReset />
+      <main className="snapscroll">
 
       {/* 1 — Nav (logo + log in) pinned up top, Moe banner centered below it */}
       <section className="snap" style={{ justifyContent: "flex-start" }}>
@@ -304,6 +315,7 @@ export default function LandingPage() {
           © <span className="num">{new Date().getFullYear()}</span> Punched.me. Built for dope businesses.
         </span>
       </footer>
+      </main>
     </div>
   );
 }
