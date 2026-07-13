@@ -53,19 +53,19 @@ function StepCircle({ s }: { s: StepData }) {
           ) : b.startsWith("TITLE:") ? (
             <p
               key={i}
-              style={{ fontSize: fs(24, 3.6, k), lineHeight: 1.2, marginBottom: fs(6, 0.8, k) }}
+              style={{ fontSize: fs(24, 3.6, k), lineHeight: 1.2, marginBottom: fs(6, 0.8, k), textWrap: "balance" }}
               className="font-bold text-gray-900"
             >
               {b.replace("TITLE:", "")}
             </p>
           ) : (
-            <p key={i} style={{ fontSize: fs(18, 2.8, k), lineHeight: 1.5, whiteSpace: "pre-line" }} className="text-gray-900">
+            <p key={i} style={{ fontSize: fs(18, 2.8, k), lineHeight: 1.5, textWrap: "balance" }} className="text-gray-900">
               {b}
             </p>
           )
         )}
         {s.closing && (
-          <p style={{ fontSize: fs(18, 2.8, k), lineHeight: 1.5 }} className="font-semibold text-gray-900">
+          <p style={{ fontSize: fs(18, 2.8, k), lineHeight: 1.5, textWrap: "balance" }} className="font-semibold text-gray-900">
             {s.closing}
           </p>
         )}
@@ -102,7 +102,7 @@ const row1: StepData[] = [
   {
     step: "Step 2",
     scale: 1.3125,
-    bullets: ["Choose your free QR display", "SUBTITLE:(It's on us)", "+", "Temporary QR stickers:\nalready on the way"],
+    bullets: ["Choose your free QR display", "SUBTITLE:(It's on us)", "+", "Temporary QR stickers: already on the way"],
     closing: null,
   },
   {
@@ -118,13 +118,13 @@ const row2: StepData[] = [
   {
     step: "Step 1",
     scale: 1.3125,
-    bullets: ["User scans QR code,\nenters name and phone number", "SUBTITLE:(No app)"],
+    bullets: ["User scans QR code, enters name and phone number", "SUBTITLE:(No app)"],
     closing: null,
   },
   {
     step: "Step 2",
     scale: 1.3125,
-    bullets: ["Next visit,\nthey scan your QR again", "SUBTITLE:(No login)"],
+    bullets: ["Next visit, they scan your QR again", "SUBTITLE:(No login)"],
     closing: null,
   },
   {
@@ -132,7 +132,7 @@ const row2: StepData[] = [
     scale: 1.125,
     bullets: [
       "TITLE:There's no step three",
-      "When the customer reaches the preset amount,\nthey show you at checkout and redeem gift",
+      "When the customer reaches the preset amount, they show you at checkout and redeem gift",
       "SUBTITLE:(No friction)",
     ],
     closing: null,
