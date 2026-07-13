@@ -131,6 +131,7 @@ const row2: StepData[] = [
     step: "Step 3",
     scale: 1.125,
     bullets: [
+      "",
       "TITLE:There's no step three",
       "When the customer reaches the preset amount, they show you at checkout and redeem gift",
       "SUBTITLE:(No friction)",
