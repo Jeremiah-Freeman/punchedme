@@ -26,6 +26,7 @@ export interface LoyaltyProgram {
   reward_name: string;
   punches_required: number;
   punch_cooldown_minutes: number;
+  head_start: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -161,6 +162,7 @@ export interface SignupResult {
   appleWalletUrl: string | null;
   googleWalletUrl: string | null;
   fallbackPassUrl: string;
+  headStart?: number; // punches banked at signup (endowed progress)
 }
 
 export interface CustomerWithAccount extends Customer {

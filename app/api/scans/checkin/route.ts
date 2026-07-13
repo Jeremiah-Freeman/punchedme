@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
         .insert({
           customer_id: customer.id,
           program_id: program.id,
-          current_punches: 0,
+          current_punches: (program.head_start as number | null) ?? 3, // Head Start
           lifetime_punches: 0,
           rewards_earned: 0,
           rewards_redeemed: 0,

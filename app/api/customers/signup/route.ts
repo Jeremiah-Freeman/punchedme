@@ -131,11 +131,13 @@ export async function POST(request: NextRequest) {
 
       customerId = newCustomer.id;
 
-      // Create loyalty account
+      // Create loyalty account — Head Start: new members begin a few punches in
+      // (endowed progress), not at a cold zero. lifetime stays 0: the head start is
+      // banked progress toward a reward, not a real visit.
       await db.from("loyalty_accounts").insert({
         customer_id: customerId,
         program_id: program.id,
-        current_punches: 0,
+        current_punches: (program.head_start as number | null) ?? 3,
         lifetime_punches: 0,
         rewards_earned: 0,
         rewards_redeemed: 0,
@@ -175,6 +177,7 @@ export async function POST(request: NextRequest) {
         ? `${base}/api/wallet/google/${publicToken}`
         : null,
       fallbackPassUrl,
+      headStart: (program.head_start as number | null) ?? 3,
     });
   } catch (err) {
     console.error("Signup error:", err);

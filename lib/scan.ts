@@ -81,7 +81,7 @@ export async function processPunch(
       .insert({
         customer_id: customer.id,
         program_id: program.id,
-        current_punches: 0,
+        current_punches: (program.head_start as number | null) ?? 3, // Head Start
         lifetime_punches: 0,
         rewards_earned: 0,
         rewards_redeemed: 0,
@@ -245,8 +245,11 @@ export async function redeemReward(
     return { ok: false, error: "Not enough punches to redeem", status: 400 };
   }
 
-  // Subtract model: deduct required punches, keep the rest
-  const newPunches = account.current_punches - program.punches_required;
+  // Subtract model: deduct required punches, keep the rest — but never drop below
+  // the Head Start. Redeeming shouldn't reset a regular to a cold zero; they walk
+  // away already a few punches toward the next reward.
+  const headStart = (program.head_start as number | null) ?? 3;
+  const newPunches = Math.max(account.current_punches - program.punches_required, headStart);
 
   await db
     .from("loyalty_accounts")

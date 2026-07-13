@@ -9,6 +9,7 @@ interface Program {
   reward_name: string;
   punches_required: number;
   punch_cooldown_minutes: number;
+  head_start: number;
   is_active: boolean;
 }
 
@@ -30,6 +31,7 @@ export default function ProgramPage() {
   const [rewardName, setRewardName] = useState("");
   const [punchesRequired, setPunchesRequired] = useState(10);
   const [cooldownMinutes, setCooldownMinutes] = useState(1440);
+  const [headStart, setHeadStart] = useState(3);
   const [isActive, setIsActive] = useState(true);
 
   // Reward menu (rungs)
@@ -51,6 +53,7 @@ export default function ProgramPage() {
           setRewardName(p.reward_name);
           setPunchesRequired(p.punches_required);
           setCooldownMinutes(p.punch_cooldown_minutes ?? 1440);
+          setHeadStart(p.head_start ?? 3);
           setIsActive(p.is_active);
 
           // Load the reward menu for this program.
@@ -135,6 +138,7 @@ export default function ProgramPage() {
             rewardName,
             punchesRequired,
             punchCooldownMinutes: cooldownMinutes,
+            headStart,
             isActive,
           }
         : {
@@ -143,6 +147,7 @@ export default function ProgramPage() {
             rewardName,
             punchesRequired,
             punchCooldownMinutes: cooldownMinutes,
+            headStart,
           };
 
       const res = await fetch("/api/business/program", {
@@ -248,6 +253,25 @@ export default function ProgramPage() {
           </select>
           <p className="text-xs text-gray-400 mt-1">
             Prevents the same customer from scanning multiple times in one visit.
+          </p>
+        </div>
+
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+            <Gift className="w-4 h-4" /> Head start
+          </label>
+          <input
+            type="number"
+            value={headStart}
+            onChange={(e) => setHeadStart(Math.max(0, Number(e.target.value)))}
+            min={0}
+            max={10}
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            New customers start with this many punches already banked — and never drop
+            below it after redeeming. Proven to bring people back more (set 0 to start
+            everyone at zero, though we don&apos;t recommend it).
           </p>
         </div>
 

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const { data: program } = await db
       .from("loyalty_programs")
-      .select("id, business_id")
+      .select("id, business_id, head_start")
       .eq("business_id", business.id)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
@@ -86,7 +86,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const balanceAfter = account.current_punches - rung.cost;
+    // Never a cold zero: after spending, re-seed to the Head Start so they leave
+    // already a few punches toward the next reward, not back to stranger.
+    const headStart = (program.head_start as number | null) ?? 3;
+    const balanceAfter = Math.max(account.current_punches - rung.cost, headStart);
 
     // Conditional update guards against a double-tap / concurrent cash-out: the
     // .gte() means the row only changes if the balance still covers the cost.
