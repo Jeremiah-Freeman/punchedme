@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Gift, Hash, ToggleLeft, ToggleRight, Clock, Plus, X } from "lucide-react";
+import { Gift, Hash, ToggleLeft, ToggleRight, Clock, Plus, X, Sparkles } from "lucide-react";
+import { luckyOwnerNote } from "@/lib/lucky";
 
 interface Program {
   id: string;
@@ -10,6 +11,7 @@ interface Program {
   punches_required: number;
   punch_cooldown_minutes: number;
   head_start: number;
+  lucky_odds: number;
   is_active: boolean;
 }
 
@@ -32,6 +34,7 @@ export default function ProgramPage() {
   const [punchesRequired, setPunchesRequired] = useState(10);
   const [cooldownMinutes, setCooldownMinutes] = useState(1440);
   const [headStart, setHeadStart] = useState(3);
+  const [luckyOdds, setLuckyOdds] = useState(0);
   const [isActive, setIsActive] = useState(true);
 
   // Reward menu (rungs)
@@ -54,6 +57,7 @@ export default function ProgramPage() {
           setPunchesRequired(p.punches_required);
           setCooldownMinutes(p.punch_cooldown_minutes ?? 1440);
           setHeadStart(p.head_start ?? 3);
+          setLuckyOdds(p.lucky_odds ?? 0);
           setIsActive(p.is_active);
 
           // Load the reward menu for this program.
@@ -139,6 +143,7 @@ export default function ProgramPage() {
             punchesRequired,
             punchCooldownMinutes: cooldownMinutes,
             headStart,
+            luckyOdds,
             isActive,
           }
         : {
@@ -148,6 +153,7 @@ export default function ProgramPage() {
             punchesRequired,
             punchCooldownMinutes: cooldownMinutes,
             headStart,
+            luckyOdds,
           };
 
       const res = await fetch("/api/business/program", {
@@ -273,6 +279,23 @@ export default function ProgramPage() {
             below it after redeeming. Proven to bring people back more (set 0 to start
             everyone at zero, though we don&apos;t recommend it).
           </p>
+        </div>
+
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+            <Sparkles className="w-4 h-4" /> Surprise double punches
+          </label>
+          <select
+            value={luckyOdds}
+            onChange={(e) => setLuckyOdds(Number(e.target.value))}
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          >
+            <option value={0}>Off — every scan is a normal single punch</option>
+            <option value={12}>Rare — about 1 in 12 scans</option>
+            <option value={8}>Occasional — about 1 in 8 scans</option>
+            <option value={6}>Generous — about 1 in 6 scans</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1">{luckyOwnerNote(luckyOdds)}</p>
         </div>
 
         {program && (

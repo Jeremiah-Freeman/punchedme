@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Smartphone, Phone, MapPin, CheckCircle2, Clock, Ticket } from "lucide-react";
+import { Smartphone, Phone, MapPin, CheckCircle2, Clock, Ticket, Sparkles } from "lucide-react";
 import type { ScanResult, SignupResult, ClaimResult } from "@/lib/types";
 import { footerLine, rankUpLine } from "@/lib/loyalty-flavor";
 import { RIDE_REASSURANCE } from "@/lib/punch-bank";
+import { LUCKY_HIT_TITLE, LUCKY_HIT_SUB, luckyOddsLine } from "@/lib/lucky";
 
 type PageState =
   | "checking"       // initial — localStorage check + GPS for returning customers
@@ -559,15 +560,33 @@ export default function JoinPage() {
       : punchResult.currentPunches === punchResult.punchesRequired - 1;
     const lifetime = punchResult.lifetimePunches ?? null;
     const leveledUp = punchResult.rankJustEarned ?? null;
+    const lucky = punchResult.luckyPunch === true;
+    const oddsLine = luckyOddsLine(punchResult.luckyOdds ?? 0);
 
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold mb-1">Punched in!</h1>
+          {lucky ? (
+            <Sparkles className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+          ) : (
+            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          )}
+          <h1 className="text-3xl font-bold mb-1">
+            {lucky ? LUCKY_HIT_TITLE : "Punched in!"}
+          </h1>
           <p className="text-gray-500 mb-6">
-            Welcome back, {punchResult.customerName} 👋
+            {lucky ? LUCKY_HIT_SUB : `Welcome back, ${punchResult.customerName} 👋`}
           </p>
+
+          {/* Lucky Punch — a double landed. Loud, gold, and honest about the odds. */}
+          {lucky && (
+            <div className="bg-amber-400 text-amber-950 rounded-2xl p-5 mb-6">
+              <p className="text-4xl font-black tabular-nums">+2 punches</p>
+              <p className="text-sm font-semibold mt-1">
+                Welcome back, {punchResult.customerName} — that scan counted twice.
+              </p>
+            </div>
+          )}
 
           {/* Moe Money — the same punch, with a couple zeros stapled on, and we
               say so. */}
@@ -625,6 +644,11 @@ export default function JoinPage() {
           <p className="text-sm text-gray-400">
             {footerLine(lifetime ?? punchResult.currentPunches)}
           </p>
+          {oddsLine && (
+            <p className="text-xs text-amber-500 mt-2 flex items-center justify-center gap-1">
+              <Sparkles className="w-3 h-3" /> {oddsLine}
+            </p>
+          )}
         </div>
       </div>
     );
