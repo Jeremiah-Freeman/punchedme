@@ -640,6 +640,16 @@ export default function JoinPage() {
           <h1 className="text-2xl font-bold mb-2">
             You&apos;re in! 🎉
           </h1>
+          {signupResult.headStart ? (
+            <div className="bg-indigo-50 rounded-2xl p-4 mb-6">
+              <p className="text-lg font-black text-indigo-600">
+                +{signupResult.headStart} punches to start
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                You&apos;re not starting from scratch — you&apos;re already on your way.
+              </p>
+            </div>
+          ) : null}
           <p className="text-gray-600 mb-8">
             Add your card to your phone — it&apos;ll pop up on your lock screen
             every time you&apos;re near the store.

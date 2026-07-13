@@ -11,13 +11,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { businessId, name, rewardName, punchesRequired, punchCooldownMinutes, brandColor } = body as {
+    const { businessId, name, rewardName, punchesRequired, punchCooldownMinutes, brandColor, headStart } = body as {
       businessId: string;
       name: string;
       rewardName: string;
       punchesRequired: number;
       punchCooldownMinutes: number;
       brandColor?: string;
+      headStart?: number;
     };
 
     if (!businessId || !name || !rewardName || !punchesRequired) {
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
         reward_name: rewardName.trim(),
         punches_required: punchesRequired,
         punch_cooldown_minutes: punchCooldownMinutes ?? 1440,
+        head_start: headStart ?? 3,
         is_active: true,
       })
       .select()
@@ -89,6 +91,7 @@ export async function PATCH(request: NextRequest) {
       rewardName?: string;
       punchesRequired?: number;
       punchCooldownMinutes?: number;
+      headStart?: number;
       isActive?: boolean;
     };
 
@@ -121,6 +124,7 @@ export async function PATCH(request: NextRequest) {
         ...(updates.punchCooldownMinutes !== undefined
           ? { punch_cooldown_minutes: updates.punchCooldownMinutes }
           : {}),
+        ...(updates.headStart !== undefined ? { head_start: updates.headStart } : {}),
         ...(updates.isActive !== undefined ? { is_active: updates.isActive } : {}),
       })
       .eq("id", programId)
