@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import RecoveryRedirect from "./RecoveryRedirect";
 import ScrollReset from "./ScrollReset";
+import SnapPager from "./SnapPager";
 import HeroSignupForm from "./HeroSignupForm";
 
 // Build a responsive font-size, optionally scaled. Uses container query units
@@ -52,19 +53,19 @@ function StepCircle({ s }: { s: StepData }) {
           ) : b.startsWith("TITLE:") ? (
             <p
               key={i}
-              style={{ fontSize: fs(24, 3.6, k), lineHeight: 1.2, marginBottom: fs(6, 0.8, k) }}
+              style={{ fontSize: fs(24, 3.6, k), lineHeight: 1.2, marginBottom: fs(6, 0.8, k), textWrap: "balance" }}
               className="font-bold text-gray-900"
             >
               {b.replace("TITLE:", "")}
             </p>
           ) : (
-            <p key={i} style={{ fontSize: fs(18, 2.8, k), lineHeight: 1.5 }} className="text-gray-900">
+            <p key={i} style={{ fontSize: fs(18, 2.8, k), lineHeight: 1.5, textWrap: "balance" }} className="text-gray-900">
               {b}
             </p>
           )
         )}
         {s.closing && (
-          <p style={{ fontSize: fs(18, 2.8, k), lineHeight: 1.5 }} className="font-semibold text-gray-900">
+          <p style={{ fontSize: fs(18, 2.8, k), lineHeight: 1.5, textWrap: "balance" }} className="font-semibold text-gray-900">
             {s.closing}
           </p>
         )}
@@ -130,8 +131,9 @@ const row2: StepData[] = [
     step: "Step 3",
     scale: 1.125,
     bullets: [
+      "",
       "TITLE:There's no step three",
-      "When the customer reaches the preset amount, they show you at checkout",
+      "When the customer reaches the preset amount, they show you at checkout and redeem gift",
       "SUBTITLE:(No friction)",
     ],
     closing: null,
@@ -189,6 +191,7 @@ export default function LandingPage() {
       `}</style>
       <RecoveryRedirect />
       <ScrollReset />
+      <SnapPager />
       <main className="snapscroll">
 
       {/* 1 — Nav (logo + log in) pinned up top, Moe banner centered below it */}
