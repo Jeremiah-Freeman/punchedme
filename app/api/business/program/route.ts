@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+// Lucky Punch odds must be 0 (off) or an integer ≥ 2. Anything else is coerced off
+// so a bad client value can never violate the DB check constraint.
+function sanitizeLuckyOdds(v: number | undefined): number {
+  const n = Math.floor(Number(v));
+  return Number.isFinite(n) && n >= 2 ? n : 0;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const authClient = await createClient();
@@ -11,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { businessId, name, rewardName, punchesRequired, punchCooldownMinutes, brandColor, headStart } = body as {
+    const { businessId, name, rewardName, punchesRequired, punchCooldownMinutes, brandColor, headStart, luckyOdds } = body as {
       businessId: string;
       name: string;
       rewardName: string;
@@ -19,6 +26,7 @@ export async function POST(request: NextRequest) {
       punchCooldownMinutes: number;
       brandColor?: string;
       headStart?: number;
+      luckyOdds?: number;
     };
 
     if (!businessId || !name || !rewardName || !punchesRequired) {
@@ -60,6 +68,7 @@ export async function POST(request: NextRequest) {
         punches_required: punchesRequired,
         punch_cooldown_minutes: punchCooldownMinutes ?? 1440,
         head_start: headStart ?? 3,
+        lucky_odds: sanitizeLuckyOdds(luckyOdds),
         is_active: true,
       })
       .select()
@@ -92,6 +101,7 @@ export async function PATCH(request: NextRequest) {
       punchesRequired?: number;
       punchCooldownMinutes?: number;
       headStart?: number;
+      luckyOdds?: number;
       isActive?: boolean;
     };
 
@@ -125,6 +135,7 @@ export async function PATCH(request: NextRequest) {
           ? { punch_cooldown_minutes: updates.punchCooldownMinutes }
           : {}),
         ...(updates.headStart !== undefined ? { head_start: updates.headStart } : {}),
+        ...(updates.luckyOdds !== undefined ? { lucky_odds: sanitizeLuckyOdds(updates.luckyOdds) } : {}),
         ...(updates.isActive !== undefined ? { is_active: updates.isActive } : {}),
       })
       .eq("id", programId)

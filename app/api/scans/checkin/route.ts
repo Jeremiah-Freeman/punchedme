@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getBusinessCoords } from "@/lib/locations";
 import { moeMoney, rankFor, rankJustEarned } from "@/lib/loyalty-flavor";
 import { computeBank, crossedRung as crossedRungOf } from "@/lib/punch-bank";
+import { rollLucky, punchDelta, nextSinceDouble } from "@/lib/lucky";
 import type { ScanResult } from "@/lib/types";
 
 const GEO_RADIUS_M = 100;
@@ -258,11 +259,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Lucky Punch — the owner can make some scans land double. Rolled here so the
+    // customer "pulls the lever" on their own self-scan. Pity counter guarantees a
+    // double once they've gone a full cycle without one. Never a penalty on a miss.
+    const luckyOdds = (program.lucky_odds as number | null) ?? 0;
+    const sinceDouble = (account.punches_since_double as number | null) ?? 0;
+    const lucky = rollLucky(luckyOdds, sinceDouble, Math.random());
+    const delta = punchDelta(lucky);
+
     // Add punch — the Punch Bank always banks the visit. There is no cap at a
     // reward: that's the whole point of "let it ride." Balance grows; a redemption
     // subtracts. rewards_earned ticks only when this visit crosses a new rung.
-    const newPunches = account.current_punches + 1;
-    const newLifetime = account.lifetime_punches + 1;
+    const newPunches = account.current_punches + delta;
+    const newLifetime = account.lifetime_punches + delta;
     const crossed = crossedRungOf(account.current_punches, newPunches, rungs);
 
     await db
@@ -270,6 +279,7 @@ export async function POST(request: NextRequest) {
       .update({
         current_punches: newPunches,
         lifetime_punches: newLifetime,
+        punches_since_double: nextSinceDouble(lucky, sinceDouble),
         ...(crossed ? { rewards_earned: account.rewards_earned + 1 } : {}),
       })
       .eq("id", account.id);
@@ -279,10 +289,11 @@ export async function POST(request: NextRequest) {
       customer_id: customer.id,
       program_id: program.id,
       event_type: crossed ? "reward_earned" : "punch_added",
-      punches_delta: 1,
+      punches_delta: delta,
       metadata: {
         previous_punches: account.current_punches,
         new_punches: newPunches,
+        lucky_double: lucky,
         source: "customer_self_checkin",
       },
     });
@@ -305,11 +316,15 @@ export async function POST(request: NextRequest) {
       rewardAvailable,
       message: crossed
         ? `You just unlocked ${crossed.rewardName}! Cash out or let it ride.`
+        : lucky
+        ? `Double punch! You're at ${newPunches}.`
         : rewardAvailable
         ? `Punch added — you're at ${newPunches}, with a reward banked.`
         : `Punch added — you're at ${newPunches}.`,
       customerId: customer.id,
       programId: program.id,
+      luckyPunch: lucky,
+      luckyOdds,
       ...honest,
       ...bankFields(newPunches, account.current_punches),
     });

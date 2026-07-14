@@ -27,6 +27,7 @@ export interface LoyaltyProgram {
   punches_required: number;
   punch_cooldown_minutes: number;
   head_start: number;
+  lucky_odds: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -143,6 +144,10 @@ export interface ScanResult {
   rungs?: { id: string; cost: number; rewardName: string; unlocked: boolean }[];
   crossedRung?: { id: string; cost: number; rewardName: string } | null;
   nextRung?: { id: string; cost: number; rewardName: string; toNext: number } | null;
+  // Lucky Punch layer — did this scan land a double, and the owner's configured odds
+  // (0 = off) so the odds line can be shown honestly on the result screen.
+  luckyPunch?: boolean;
+  luckyOdds?: number;
 }
 
 // Customer cash-out → a timed ticket the staff honors.
