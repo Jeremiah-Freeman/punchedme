@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Gift, Hash, ToggleLeft, ToggleRight, Clock, Plus, X, Sparkles } from "lucide-react";
 import { luckyOwnerNote } from "@/lib/lucky";
+import WhyThisWorks from "@/components/WhyThisWorks";
 
 interface Program {
   id: string;
@@ -279,6 +280,7 @@ export default function ProgramPage() {
             below it after redeeming. Proven to bring people back more (set 0 to start
             everyone at zero, though we don&apos;t recommend it).
           </p>
+          <WhyThisWorks topic="headStart" />
         </div>
 
         <div>
@@ -296,6 +298,7 @@ export default function ProgramPage() {
             <option value={6}>Generous — about 1 in 6 scans</option>
           </select>
           <p className="text-xs text-gray-400 mt-1">{luckyOwnerNote(luckyOdds)}</p>
+          <WhyThisWorks topic="luckyPunch" />
         </div>
 
         {program && (
@@ -336,7 +339,9 @@ export default function ProgramPage() {
             one. Punches never reset.
           </p>
 
-          <div className="space-y-3">
+          <WhyThisWorks topic="rewardMenu" />
+
+          <div className="space-y-3 mt-5">
             {rungs.map((r, i) => (
               <div key={i} className="flex items-center gap-2">
                 <input
